@@ -1,0 +1,60 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getSite, getGalleries, galleryHref, paragraphs } from '../lib/content';
+import { buttonClass } from '../lib/ui';
+const { about } = await getSite();
+const galleries = await getGalleries();
+---
+<Layout title="Om Stefan Borup | Profesjonell Fotograf" description="Lær mer om Stefan Borup - en erfaren fotograf med lidenskap for arkitektur, portretter og produktfotografering. Over 15 års erfaring." wrapperClass={null}>
+  <main>
+    <section class="pt-32 pb-16 bg-background">
+      <div class="container-custom"><div class="max-w-3xl">
+        <h1 class="heading-xl mb-6">{about.title}</h1>
+        <p class="body-lg text-muted-foreground">{about.pageLead}</p>
+      </div></div>
+    </section>
+    <section class="section-padding bg-background">
+      <div class="container-custom">
+        <div class="grid md:grid-cols-2 gap-12 lg:gap-20 items-start">
+          <div class="relative"><img src={about.image.src} alt={about.image.alt} decoding="async" class="w-full h-auto rounded-sm" /></div>
+          <div class="space-y-6">
+            <h2 class="heading-lg">{about.storyHeading}</h2>
+            <div class="space-y-4 text-muted-foreground body-md">
+              <p class="whitespace-pre-line">{about.text}</p>
+              {paragraphs(about.story).map((p) => <p>{p}</p>)}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    {about.quote && (
+      <section class="section-padding bg-card">
+        <div class="container-custom"><div class="max-w-4xl mx-auto text-center">
+          <blockquote class="heading-md italic text-muted-foreground">« {about.quote} »</blockquote>
+        </div></div>
+      </section>
+    )}
+    <section class="section-padding bg-background">
+      <div class="container-custom">
+        <h2 class="heading-lg text-center mb-12">Ekspertiseområder</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+          {galleries.map((g) => (
+            <a class="group" href={galleryHref(g.slug)}>
+              <div class="bg-card p-8 rounded-sm border border-border hover:border-gold transition-colors h-full">
+                <h3 class="heading-md mb-4 group-hover:text-gold transition-colors">{g.name}</h3>
+                <p class="body-md text-muted-foreground line-clamp-3">{g.heroSubtitle}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+    <section class="section-padding bg-card">
+      <div class="container-custom text-center">
+        <h2 class="heading-lg mb-6">{about.ctaHeading}</h2>
+        <p class="body-lg text-muted-foreground mb-8 max-w-2xl mx-auto">{about.ctaText}</p>
+        <a href="/#kontakt"><button class={buttonClass('default', 'uppercase tracking-wider')}>Ta kontakt</button></a>
+      </div>
+    </section>
+  </main>
+</Layout>

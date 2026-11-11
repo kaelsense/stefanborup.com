@@ -1,0 +1,53 @@
+---
+import Icon from './Icon.astro';
+interface Props { heading: string; items: { key: string; quote: string; author: string; role: string }[] }
+const { heading, items } = Astro.props;
+const DOT_ON = 'h-2 rounded-full transition-all duration-300 bg-gold w-6';
+const DOT_OFF = 'h-2 rounded-full transition-all duration-300 w-2 bg-muted-foreground/40 hover:bg-muted-foreground';
+const first = items[0];
+---
+{first && (
+<section class="section-padding bg-background" data-testimonials={JSON.stringify(items)} data-dot-on={DOT_ON} data-dot-off={DOT_OFF}>
+  <div class="container-custom">
+    <h2 class="heading-lg text-center mb-16">{heading}</h2>
+    <div class="max-w-4xl mx-auto relative">
+      <div class="text-center" aria-live="polite">
+        <Icon name="quote" class="w-12 h-12 text-gold mx-auto mb-8 opacity-50" />
+        <p class="body-lg text-foreground mb-8 min-h-[120px] flex items-center justify-center" data-quote>"{first.quote}"</p>
+        <div class="space-y-1">
+          <p class="font-semibold text-foreground" data-author>{first.author}</p>
+          <p class="text-sm text-muted-foreground" data-role>{first.role}</p>
+        </div>
+      </div>
+      {items.length > 1 && (
+        <div class="flex items-center justify-center gap-4 mt-12">
+          <button class="p-2 text-muted-foreground hover:text-foreground transition-colors" aria-label="Forrige omtale" data-prev><Icon name="chevron-left" size={24} /></button>
+          <div class="flex gap-2">{items.map((_, i) => <button class={i === 0 ? DOT_ON : DOT_OFF} aria-label={`Vis omtale ${i + 1}`} data-dot={i}></button>)}</div>
+          <button class="p-2 text-muted-foreground hover:text-foreground transition-colors" aria-label="Neste omtale" data-next><Icon name="chevron-right" size={24} /></button>
+        </div>
+      )}
+    </div>
+  </div>
+</section>
+)}
+<script>
+  // Rotates every 8 s; arrows and dots switch directly (original behaviour).
+  const root = document.querySelector<HTMLElement>('[data-testimonials]');
+  if (root) {
+    const items = JSON.parse(root.dataset.testimonials!) as { quote: string; author: string; role: string }[];
+    const dots = [...root.querySelectorAll<HTMLElement>('[data-dot]')];
+    let current = 0;
+    const show = (n: number) => {
+      current = (n + items.length) % items.length;
+      const t = items[current];
+      root.querySelector('[data-quote]')!.textContent = `"${t.quote}"`;
+      root.querySelector('[data-author]')!.textContent = t.author;
+      root.querySelector('[data-role]')!.textContent = t.role;
+      dots.forEach((d, i) => (d.className = i === current ? root.dataset.dotOn! : root.dataset.dotOff!));
+    };
+    root.querySelector('[data-prev]')?.addEventListener('click', () => show(current - 1));
+    root.querySelector('[data-next]')?.addEventListener('click', () => show(current + 1));
+    dots.forEach((d, i) => d.addEventListener('click', () => show(i)));
+    if (items.length > 1) setInterval(() => show(current + 1), 8000);
+  }
+</script>

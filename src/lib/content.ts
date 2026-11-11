@@ -1,0 +1,36 @@
+import { getCollection, getEntry } from 'astro:content';
+
+/** Slugs that have their own top-level URL on the live site. */
+export const RESERVED_GALLERY_SLUGS = ['arkitektur', 'produktbilder', 'portretter'];
+
+/** Same rule as the original router: reserved slugs at /<slug>, others at /galleri/<slug>. */
+export const galleryHref = (slug: string) =>
+  RESERVED_GALLERY_SLUGS.includes(slug) ? `/${slug}` : `/galleri/${slug}`;
+
+export async function getGalleries() {
+  const all = await getCollection('galleries');
+  return all.map((g) => g.data).sort((a, b) => a.order - b.order);
+}
+
+export async function getSite() {
+  const entry = await getEntry('site', 'main');
+  if (!entry) throw new Error('src/content/site.json is missing the "main" entry');
+  return entry.data;
+}
+
+/** Split CMS text into paragraphs on blank lines (same as the original). */
+export const paragraphs = (text: string) =>
+  text.split(/\n\s*\n/).map((t) => t.trim()).filter(Boolean);
+
+export type GalleryItem = { id: string; src: string; full: string; title: string; description: string | null; category: string | null };
+
+export function galleryItems(g: { name: string; images: { key: string; src: string; thumb?: string; alt: string; caption?: string }[] }, withCategory = false): GalleryItem[] {
+  return g.images.map((i) => ({
+    id: i.key,
+    src: i.thumb || i.src,
+    full: i.src,
+    title: i.alt || i.caption || g.name,
+    description: i.caption || null,
+    category: withCategory ? g.name : null,
+  }));
+}

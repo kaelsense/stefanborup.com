@@ -1,0 +1,49 @@
+---
+import Layout from '../layouts/Layout.astro';
+import GalleryGrid from './GalleryGrid.astro';
+import { paragraphs, galleryItems } from '../lib/content';
+import type { CollectionEntry } from 'astro:content';
+interface Props { gallery: CollectionEntry<'galleries'>['data'] }
+const { gallery: g } = Astro.props;
+const title = g.seoTitle || `${g.name} | Stefan Borup Foto`;
+const description = g.seoDescription || g.heroSubtitle || g.intro.slice(0, 155);
+---
+<Layout title={title} description={description}>
+  <main>
+    <section class="relative h-[75vh] min-h-[460px] flex items-end overflow-hidden">
+      <div class="absolute inset-0">
+        <img src={g.cover.src} alt={g.cover.alt || g.name} decoding="async" loading="eager" class="w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-background/10"></div>
+      </div>
+      <div class="relative z-10 container-custom pb-16 md:pb-24">
+        <span class="inline-block w-12 h-px bg-primary mb-6"></span>
+        <h1 class="heading-xl mb-4 max-w-3xl">{g.name}</h1>
+        {g.heroSubtitle && <p class="body-lg text-foreground/85 max-w-2xl">{g.heroSubtitle}</p>}
+      </div>
+    </section>
+    {(g.introHeading || g.intro) && (
+      <section class="py-16 md:py-24">
+        <div class="container-custom max-w-3xl">
+          {g.introHeading && <h2 class="heading-md text-gold mb-6">{g.introHeading}</h2>}
+          <div class="space-y-4">{paragraphs(g.intro).map((p) => <p class="body-md text-muted-foreground">{p}</p>)}</div>
+        </div>
+      </section>
+    )}
+    <section class="pb-20 md:pb-28">
+      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10">
+        {g.images.length === 0
+          ? <p class="text-center text-muted-foreground py-20">Nye bilder kommer snart.</p>
+          : <GalleryGrid items={galleryItems(g)} aspect={g.layout === 'portrait' ? 'aspect-[3/4]' : undefined} />}
+      </div>
+    </section>
+    {(g.ctaHeading || g.ctaText) && (
+      <section class="py-20 bg-dark-surface">
+        <div class="container-custom text-center">
+          {g.ctaHeading && <h2 class="heading-md text-gold mb-4">{g.ctaHeading}</h2>}
+          {g.ctaText && <p class="body-md text-muted-foreground mb-8 max-w-2xl mx-auto">{g.ctaText}</p>}
+          <a class="inline-flex items-center justify-center px-8 py-3 bg-primary text-primary-foreground font-medium rounded-md hover:bg-primary/90 transition-colors uppercase tracking-wider text-sm" href="/bestilling">{g.ctaLabel || 'Ta kontakt'}</a>
+        </div>
+      </section>
+    )}
+  </main>
+</Layout>

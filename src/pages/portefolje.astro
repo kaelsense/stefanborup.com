@@ -1,0 +1,35 @@
+---
+import Layout from '../layouts/Layout.astro';
+import GalleryGrid from '../components/GalleryGrid.astro';
+import { getGalleries, galleryItems } from '../lib/content';
+const galleries = (await getGalleries()).filter((g) => g.images.length);
+const tabs = [
+  { id: 'alle', label: 'Alle', items: galleries.flatMap((g) => galleryItems(g, true)) },
+  ...galleries.map((g) => ({ id: g.slug, label: g.name, items: galleryItems(g, true) })),
+];
+const tabClass = (active: boolean) => `px-5 py-2 text-xs uppercase tracking-[0.2em] font-medium border transition-all ${active ? 'border-primary text-primary' : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/40'}`;
+---
+<Layout title="Portefølje | Stefan Borup Foto" description="Utforsk et utvalg av mine arbeider innen profesjonell fotografi - portretter, produktbilder og arkitekturfoto.">
+  <main class="pt-28 pb-16">
+    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-10">
+      <div class="text-center mb-4">
+        <span class="inline-block w-12 h-px bg-primary mb-6"></span>
+        <h1 class="heading-xl mb-4">Portefølje</h1>
+        <p class="body-md text-muted-foreground max-w-2xl mx-auto">Et utvalg arbeider – klikk på et bilde for å se det i full størrelse.</p>
+      </div>
+      <div class="flex flex-wrap justify-center gap-2 my-12" role="tablist" data-tabs>
+        {tabs.map((t, i) => <button role="tab" aria-selected={i === 0 ? 'true' : 'false'} data-tab={t.id} class={tabClass(i === 0)}>{t.label}</button>)}
+      </div>
+      {tabs.map((t, i) => <GalleryGrid items={t.items} tab={t.id} hidden={i !== 0} />)}
+    </div>
+  </main>
+</Layout>
+<script>
+  const ACTIVE = 'px-5 py-2 text-xs uppercase tracking-[0.2em] font-medium border transition-all border-primary text-primary';
+  const INACTIVE = 'px-5 py-2 text-xs uppercase tracking-[0.2em] font-medium border transition-all border-border text-muted-foreground hover:text-foreground hover:border-foreground/40';
+  const tabs = document.querySelectorAll<HTMLButtonElement>('[data-tabs] [data-tab]');
+  tabs.forEach((tab) => tab.addEventListener('click', () => {
+    tabs.forEach((t) => { const on = t === tab; t.className = on ? ACTIVE : INACTIVE; t.setAttribute('aria-selected', String(on)); });
+    document.querySelectorAll<HTMLElement>('[data-tab-panel]').forEach((p) => (p.hidden = p.dataset.tabPanel !== tab.dataset.tab));
+  }));
+</script>

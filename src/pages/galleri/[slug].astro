@@ -1,0 +1,11 @@
+---
+// /galleri/<slug> for any additional gallery added to src/content/galleries/ (none today).
+import GalleryPage from '../../components/GalleryPage.astro';
+import { getGalleries, RESERVED_GALLERY_SLUGS } from '../../lib/content';
+export async function getStaticPaths() {
+  const galleries = await getGalleries();
+  return galleries.filter((g) => !RESERVED_GALLERY_SLUGS.includes(g.slug)).map((g) => ({ params: { slug: g.slug }, props: { gallery: g } }));
+}
+const { gallery } = Astro.props;
+---
+<GalleryPage gallery={gallery} />

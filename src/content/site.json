@@ -1,0 +1,241 @@
+{
+  "main": {
+    "hero": {
+      "slides": [
+        {
+          "key": "h1",
+          "image": {
+            "alt": "Fotografi av Stefan Borup",
+            "src": "/images/published/seed/hero-1.webp",
+            "thumb": "/images/published/seed/hero-1.webp"
+          },
+          "title": "",
+          "subtitle": "",
+          "buttonLink": "",
+          "buttonLabel": ""
+        },
+        {
+          "key": "h2",
+          "image": {
+            "alt": "Fotografi av Stefan Borup",
+            "src": "/images/published/seed/hero-2.webp",
+            "thumb": "/images/published/seed/hero-2.webp"
+          },
+          "title": "",
+          "subtitle": "",
+          "buttonLink": "",
+          "buttonLabel": ""
+        },
+        {
+          "key": "h3",
+          "image": {
+            "alt": "Portrett av Stefan Borup",
+            "src": "/images/published/seed/hero-3.webp",
+            "thumb": "/images/published/seed/hero-3.webp"
+          },
+          "title": "",
+          "subtitle": "",
+          "buttonLink": "",
+          "buttonLabel": ""
+        }
+      ]
+    },
+    "about": {
+      "text": "Stefan Borup er en erfaren fotograf med base i Lillestrøm. Opprinnelig fra Danmark, har han utviklet en stil som kombinerer det beste fra både dansk og norsk estetikk. Hans arbeid kjennetegnes av en klassisk og tidløs tilnærming, enten det gjelder portretter, produktbilder.",
+      "image": {
+        "alt": "Stefan Borup - Fotograf",
+        "src": "/images/published/seed/om-stefan.webp",
+        "thumb": "/images/published/seed/om-stefan.webp"
+      },
+      "quote": "Jeg spesialiserer meg på å skape stilfulle bilder til både profesjonelt og privat bruk, og gjør hverdagsøyeblikk om til stilfulle minner.",
+      "story": "Med over 15 års erfaring innen profesjonell fotografering har jeg hatt gleden av å samarbeide med alt fra store bedrifter til små oppstartsbedrifter. Min tilnærming handler alltid om å forstå kundens visjon og oversette den til visuelle historier som gjør inntrykk.\n\nJeg spesialiserer meg på tre hovedområder: arkitekturfotografering, produktfotografering og portretter. Hvert område krever sin egen tilnærming og ekspertise, men felles for alt arbeidet mitt er fokuset på kvalitet, lys og komposisjon.",
+      "title": "Om Stefan",
+      "ctaText": "Har du et prosjekt i tankene? Jeg vil gjerne høre fra deg og diskutere hvordan vi kan samarbeide.",
+      "pageLead": "Fotograf med lidenskap for å fange øyeblikk og fortelle historier gjennom bilder.",
+      "ctaHeading": "La oss skape noe sammen",
+      "storyHeading": "Min historie"
+    },
+    "intro": {
+      "text": "I en verden der oppmerksomhet er valuta, er visuell kvalitet ikke et valg – det er en nødvendighet. Stefan hjelper ambisiøse bedrifter med å skape bilder og video som fanger, formidler og får folk til å handle.",
+      "title": "Hvis bildene dine ikke selger for deg – hvem gjør det da?"
+    },
+    "logos": [
+      {
+        "key": "l0",
+        "name": "Luxconsult",
+        "image": {
+          "alt": "Luxconsult",
+          "src": "/images/published/seed/logos/luxconsult.png",
+          "thumb": "/images/published/seed/logos/luxconsult.png"
+        }
+      },
+      {
+        "key": "l1",
+        "name": "Timeme",
+        "image": {
+          "alt": "Timeme",
+          "src": "/images/published/seed/logos/timeme.png",
+          "thumb": "/images/published/seed/logos/timeme.png"
+        }
+      },
+      {
+        "key": "l2",
+        "name": "Hurdalsjøen",
+        "image": {
+          "alt": "Hurdalsjøen",
+          "src": "/images/published/seed/logos/hurdalsjoen.png",
+          "thumb": "/images/published/seed/logos/hurdalsjoen.png"
+        }
+      },
+      {
+        "key": "l3",
+        "name": "Garcon",
+        "image": {
+          "alt": "Garcon",
+          "src": "/images/published/seed/logos/garcon.png",
+          "thumb": "/images/published/seed/logos/garcon.png"
+        }
+      },
+      {
+        "key": "l4",
+        "name": "Elevate Productions",
+        "image": {
+          "alt": "Elevate Productions",
+          "src": "/images/published/seed/logos/elevate.png",
+          "thumb": "/images/published/seed/logos/elevate.png"
+        }
+      },
+      {
+        "key": "l5",
+        "name": "Netflix",
+        "image": {
+          "alt": "Netflix",
+          "src": "/images/published/seed/logos/netflix.png",
+          "thumb": "/images/published/seed/logos/netflix.png"
+        }
+      },
+      {
+        "key": "l6",
+        "name": "K2 Elektro",
+        "image": {
+          "alt": "K2 Elektro",
+          "src": "/images/published/seed/logos/k2elektro.webp",
+          "thumb": "/images/published/seed/logos/k2elektro.webp"
+        }
+      },
+      {
+        "key": "l7",
+        "name": "Strongpoint",
+        "image": {
+          "alt": "Strongpoint",
+          "src": "/images/published/seed/logos/strongpoint.png",
+          "thumb": "/images/published/seed/logos/strongpoint.png"
+        }
+      }
+    ],
+    "footer": {
+      "email": "stefan@stefanborup.com",
+      "phone": "",
+      "facebook": "https://facebook.com/Fotografstefanborup",
+      "linkedin": "https://linkedin.com/in/stefan-borup-929a04159/",
+      "instagram": "https://instagram.com/fotografstefanborup_/",
+      "description": "Profesjonell fotograf med base i Lillestrøm. Spesialiserer seg på portretter, produktbilder og arkitekturfotografi."
+    },
+    "contact": {
+      "text": "Book en konsultasjon nedenfor, så tar vi kontakt!",
+      "title": "Kontakt mig i dag, og lad os tale om dine idéer, ønsker og muligheder."
+    },
+    "services": [
+      {
+        "key": "s1",
+        "body": "Et profesjonelt headshot er ikke bare et bilde – det er ditt førsteinntrykk. På LinkedIn, på nettsiden, i presentasjoner eller i søknadsbunken. Vil du bli valgt bort – eller valgt inn?\n\nStefan guider deg gjennom hele prosessen for å få frem et uttrykk som skaper tillit og nysgjerrighet. Bildet ditt skal ikke bare vise hvem du er – det skal jobbe for deg.",
+        "lead": "Før du får sagt ett ord – har bildet ditt allerede talt.",
+        "link": "/portretter",
+        "image": {
+          "alt": "Portrett fotografi",
+          "src": "/images/published/seed/hero-3.webp",
+          "thumb": "/images/published/seed/hero-3.webp"
+        },
+        "title": "Portretter og Miljøbilder",
+        "closing": "– og sørg for at du gjør inntrykk før du engang har sagt hei.",
+        "buttonLabel": "Book din session i dag"
+      },
+      {
+        "key": "s2",
+        "body": "Gode produktbilder utgjør ofte forskjellen når en kunde skal kjøpe noe. Hos meg får du alltid bilder av høyeste kvalitet.\n\nMed fokus på detaljer leverer Stefan produktfotografier av høyeste kvalitet, som fremhever dine produkter på en måte som appellerer til kundene.",
+        "lead": "",
+        "link": "/produktbilder",
+        "image": {
+          "alt": "Produktfotografi",
+          "src": "/images/published/seed/produktbilder.webp",
+          "thumb": "/images/published/seed/produktbilder.webp"
+        },
+        "title": "Produktbilder",
+        "closing": "",
+        "buttonLabel": "Se bilder"
+      },
+      {
+        "key": "s3",
+        "body": "Med fokus på detaljer leverer Stefan produktfotografier av høyeste kvalitet, som fremhever dine produkter på en måte som appellerer til kundene.",
+        "lead": "",
+        "link": "/produktbilder",
+        "image": {
+          "alt": "Klokke produktfoto",
+          "src": "/images/published/seed/klokke.jpg",
+          "thumb": "/images/published/seed/klokke.jpg"
+        },
+        "title": "Produktbilder",
+        "closing": "",
+        "buttonLabel": "Se bilder"
+      },
+      {
+        "key": "s4",
+        "body": "Med fokus på detaljer leveres der vakre bilder til veggen din. Høy kvalitets bilder som gjør at du kan få det i akkurat den størrelse du ønsker.",
+        "lead": "",
+        "link": "/arkitektur",
+        "image": {
+          "alt": "Arkitektur fotografi",
+          "src": "/images/published/seed/arkitektur.webp",
+          "thumb": "/images/published/seed/arkitektur.webp"
+        },
+        "title": "Arkitektur",
+        "closing": "",
+        "buttonLabel": "Se bilder"
+      }
+    ],
+    "latestShoot": {
+      "link": "/portefolje",
+      "text": "Vil du se hva Stefan kan gjøre for deg? Ta en titt bak kulissene og se et utvalg av bilder fra vår siste fotoshoot.",
+      "image": {
+        "alt": "Bak kulissene",
+        "src": "/images/published/seed/latest-session.webp",
+        "thumb": "/images/published/seed/latest-session.webp"
+      },
+      "title": "Bli med bak kulissene",
+      "buttonLabel": "Se bilder"
+    },
+    "testimonials": {
+      "items": [
+        {
+          "key": "t1",
+          "role": "Daglig Leder - Framdrift",
+          "quote": "Vi er meget fornøyd med tjenesten vi fikk levert av Fotograf Stefan Borup. Ikke bare er han en utrolig dyktig fotograf, men han skaper glede og får omgivelsene til og le og slappe av.",
+          "author": "Benjamin Eriksen"
+        },
+        {
+          "key": "t2",
+          "role": "Business & Performance Coach",
+          "quote": "Stefan er like profesjonell som han er kunstnerisk. Han har en utrolig evne til å trekke magi ut av øyeblikket og virkelig fange den unike essensen av mennesker.",
+          "author": "Janick Løwe"
+        },
+        {
+          "key": "t3",
+          "role": "Elevate Productions",
+          "quote": "Stefan er en av de få derude der er 10/10 på alle kriterier som kvalitet, ryddelighed, kommunikasjon, pris, levering og fleksibilitet.",
+          "author": "Joonas Andersson"
+        }
+      ],
+      "heading": "Dette sier kundene om Stefan:"
+    }
+  }
+}

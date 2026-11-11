@@ -1,0 +1,11 @@
+---
+// /portretter, /produktbilder, /arkitektur (gallery slugs with their own URL).
+import GalleryPage from '../components/GalleryPage.astro';
+import { getGalleries, RESERVED_GALLERY_SLUGS } from '../lib/content';
+export async function getStaticPaths() {
+  const galleries = await getGalleries();
+  return galleries.filter((g) => RESERVED_GALLERY_SLUGS.includes(g.slug)).map((g) => ({ params: { gallery: g.slug }, props: { gallery: g } }));
+}
+const { gallery } = Astro.props;
+---
+<GalleryPage gallery={gallery} />
