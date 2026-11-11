@@ -1,0 +1,35 @@
+{
+  "id": "produktbilder",
+  "name": "Produktbilder",
+  "slug": "produktbilder",
+  "cover": {
+    "alt": "Produktfotografi",
+    "src": "/images/published/seed/produktbilder.webp",
+    "thumb": "/images/published/seed/produktbilder.webp"
+  },
+  "intro": "Med fokus på detaljer leverer Stefan produktfotografier av høyeste kvalitet, som fremhever dine produkter på en måte som appellerer til kundene. Fra enkle packshots til kreative stilleben – alle produkter fortjener å bli vist fra sin beste side.",
+  "images": [
+    {
+      "alt": "Kosmetikk serie",
+      "key": "cc4e4907",
+      "src": "/images/unsplash/photo-1596462502278-27bfdc403348.jpg",
+      "thumb": "/images/unsplash/photo-1596462502278-27bfdc403348.jpg"
+    },
+    {
+      "alt": "Smykker",
+      "key": "f6596e54",
+      "src": "/images/unsplash/photo-1515562141207-7a88fb7ce338.jpg",
+      "thumb": "/images/unsplash/photo-1515562141207-7a88fb7ce338.jpg"
+    }
+  ],
+  "layout": "natural",
+  "ctaText": "Ta kontakt for å diskutere ditt prosjekt. Enten det er e-handel, katalog eller markedsføring – jeg sørger for at produktene dine skiller seg ut.",
+  "visible": true,
+  "ctaLabel": "Ta kontakt",
+  "seoTitle": "Produktbilder | Stefan Borup Foto",
+  "ctaHeading": "Trenger du produktbilder?",
+  "heroSubtitle": "Gode produktbilder utgjør ofte forskjellen når en kunde skal kjøpe noe. Hos meg får du alltid bilder av høyeste kvalitet.",
+  "introHeading": "Bilder som selger",
+  "seoDescription": "Produktfotografi av høyeste kvalitet som fremhever dine produkter og selger.",
+  "order": 1
+}

@@ -1,0 +1,108 @@
+---
+// "#kontakt" on the front page: date picker + booking form. Markup matches the
+// original shadcn/ui components; behaviour lives in src/scripts/contact-form.ts.
+// Where submissions go is decided ONLY in src/lib/forms/backend.ts (Resend via api/lead.ts on Vercel).
+import Icon from './Icon.astro';
+import { renderCalendar } from '../lib/calendar';
+import { PHOTO_PACKAGES, ADDITIONAL_SERVICES } from '../lib/forms/lead';
+import { LABEL, INPUT, TEXTAREA, CHECKBOX, SELECT_TRIGGER, buttonClass } from '../lib/ui';
+interface Props { title: string; text: string }
+const { title, text } = Astro.props;
+const now = new Date();
+const calendarHtml = renderCalendar(new Date(now.getFullYear(), now.getMonth(), 1), null, now);
+const input = `${INPUT} bg-card border-border`;
+const field = (id: string, label: string, opts: { placeholder: string; type?: string; required?: boolean; muted?: boolean }) => ({ id, label, ...opts });
+const row1 = [field('firstName', 'Fornavn', { placeholder: 'Ditt fornavn', required: true }), field('lastName', 'Etternavn', { placeholder: 'Ditt etternavn' })];
+const row2 = [field('email', 'E-post', { placeholder: 'din@epost.no', type: 'email', required: true }), field('phone', 'Telefon', { placeholder: '+47', type: 'tel' })];
+const seller1 = [field('sellerName', 'Selgers navn', { placeholder: 'Navn på selger', muted: true }), field('assignmentNumber', 'Oppdragsnummer', { placeholder: 'Oppdragsnr.', muted: true })];
+const seller2 = field('sellerAddress', 'Adresse for fotografering', { placeholder: 'Gate, nummer, postnummer og sted', muted: true });
+const seller3 = [field('sellerEmail', 'Selgers e-post', { placeholder: 'selger@epost.no', type: 'email', muted: true }), field('sellerPhone', 'Selgers telefon', { placeholder: '+47', type: 'tel', muted: true })];
+type F = ReturnType<typeof field>;
+const HIDDEN_SELECT = 'position: absolute; border: 0px; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; overflow-wrap: normal;';
+const HIDDEN_CHECK = 'position: absolute; pointer-events: none; opacity: 0; margin: 0px; transform: translateX(-100%); width: 16px; height: 16px;';
+---
+<section class="section-padding bg-dark-deeper" id="kontakt">
+  <div class="container-custom">
+    <div class="text-center mb-12">
+      <h2 class="heading-md text-gold mb-4">{title}</h2>
+      <p class="body-md text-muted-foreground">{text}</p>
+    </div>
+    <div class="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto" data-lead>
+      <div class="space-y-6">
+        <div>
+          <label class={`${LABEL} text-sm text-muted-foreground mb-2 block`}>Velg ønsket dato for fotografering</label>
+          <div class="rdp rounded-md border border-border bg-card p-4" data-calendar set:html={calendarHtml} />
+        </div>
+        <div hidden data-time-field>
+          <label class={`${LABEL} text-sm text-muted-foreground mb-2 block`} for="time">Ønsket klokkeslett</label>
+          <input type="time" class={`${INPUT} bg-card border-border max-w-[150px]`} id="time" value="" />
+        </div>
+        <p class="text-sm text-muted-foreground" hidden data-chosen-date></p>
+      </div>
+      <form class="space-y-5" novalidate>
+        {[row1, row2].map((row) => (
+          <div class="grid grid-cols-2 gap-4">
+            {row.map((f: F) => (
+              <div>
+                <label class={`${LABEL} text-sm mb-1.5 block`} for={f.id}>{f.label}{f.required && <Fragment> <span class="text-destructive">*</span></Fragment>}</label>
+                <input type={f.type} class={input} id={f.id} placeholder={f.placeholder} value="" />
+              </div>
+            ))}
+          </div>
+        ))}
+        <div>
+          <label class={`${LABEL} text-sm mb-1.5 block`}>Ønsket fotopakke</label>
+          <button type="button" role="combobox" aria-controls="photo-package-list" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" data-placeholder="" class={`${SELECT_TRIGGER} bg-card border-border`} data-select>
+            <span style="pointer-events: none;" data-select-value>Velg fotopakke</span>
+            <Icon name="chevron-down" class="h-4 w-4 opacity-50" ariaHidden />
+          </button>
+          <select aria-hidden="true" tabindex="-1" style={HIDDEN_SELECT} data-native-select>
+            {PHOTO_PACKAGES.map((p) => <option value={p.value}>{p.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label class={`${LABEL} text-sm mb-2 block`}>Tilleggstjenester</label>
+          <div class="grid grid-cols-2 gap-3">
+            {ADDITIONAL_SERVICES.map((s) => (
+              <div class="flex items-center space-x-2">
+                <button type="button" role="checkbox" aria-checked="false" data-state="unchecked" value="on" class={CHECKBOX} id={s.id} data-service={s.id}></button>
+                <input type="checkbox" aria-hidden="true" tabindex="-1" value="on" style={HIDDEN_CHECK} />
+                <label class="peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-sm font-normal cursor-pointer" for={s.id}>{s.label}</label>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div class="border-t border-border pt-5 mt-5">
+          <label class={`${LABEL} text-sm text-gold mb-3 block`}>Info om selger/oppdrag</label>
+          <div class="space-y-4">
+            {[seller1, seller2, seller3].map((row) => Array.isArray(row) ? (
+              <div class="grid grid-cols-2 gap-4">
+                {row.map((f: F) => (
+                  <div>
+                    <label class={`${LABEL} text-sm mb-1.5 block text-muted-foreground`} for={f.id}>{f.label}</label>
+                    <input type={f.type} class={input} id={f.id} placeholder={f.placeholder} value="" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div>
+                <label class={`${LABEL} text-sm mb-1.5 block text-muted-foreground`} for={row.id}>{row.label}</label>
+                <input type={row.type} class={input} id={row.id} placeholder={row.placeholder} value="" />
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label class={`${LABEL} text-sm mb-1.5 block`} for="message">Spesielle ønsker eller kommentarer</label>
+          <textarea class={`${TEXTAREA} bg-card border-border resize-none`} id="message" placeholder="Beskriv eventuelle spesielle ønsker for oppdraget" rows="3"></textarea>
+        </div>
+        <button type="submit" class={buttonClass('default', 'w-full uppercase tracking-wider')}>Send forespørsel</button>
+        <div aria-hidden="true" style="position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden;"><label for="website">Nettside</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off" value="" data-honeypot /></div>
+      </form>
+    </div>
+  </div>
+</section>
+<script>
+  import { initContactForm } from '../scripts/contact-form.ts';
+  initContactForm();
+</script>

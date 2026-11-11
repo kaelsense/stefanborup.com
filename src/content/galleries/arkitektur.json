@@ -1,0 +1,41 @@
+{
+  "id": "arkitektur",
+  "name": "Arkitektur",
+  "slug": "arkitektur",
+  "cover": {
+    "alt": "Arkitekturfotografi",
+    "src": "/images/published/seed/arkitektur.webp",
+    "thumb": "/images/published/seed/arkitektur.webp"
+  },
+  "intro": "Arkitekturfotografi handler om mer enn å dokumentere bygninger – det handler om å fange lys, linjer og atmosfære. Stefan kombinerer teknisk presisjon med kunstnerisk blikk for å skape bilder som fremhever arkitekturens essens.",
+  "images": [
+    {
+      "alt": "Moderne kontorbygg",
+      "key": "e41470fa",
+      "src": "/images/unsplash/photo-1486406146926-c627a92ad1ab.jpg",
+      "thumb": "/images/unsplash/photo-1486406146926-c627a92ad1ab.jpg"
+    },
+    {
+      "alt": "Historisk fasade",
+      "key": "62bf83fb",
+      "src": "/images/unsplash/photo-1464146072230-91cabc968266.jpg",
+      "thumb": "/images/unsplash/photo-1464146072230-91cabc968266.jpg"
+    },
+    {
+      "alt": "Vikingbad",
+      "key": "7356c0e4",
+      "src": "/images/1772694029006.jpg",
+      "thumb": "/images/1772694029006.jpg"
+    }
+  ],
+  "layout": "natural",
+  "ctaText": "Ta kontakt for å diskutere ditt prosjekt. Enten det er interiør, eksteriør eller detaljer – jeg hjelper deg med å fange bygningens beste sider.",
+  "visible": true,
+  "ctaLabel": "Ta kontakt",
+  "seoTitle": "Arkitekturfotografi | Stefan Borup Foto",
+  "ctaHeading": "Interessert i arkitekturfotografi?",
+  "heroSubtitle": "Med fokus på detaljer leveres det vakre bilder til veggen din. Høy kvalitets bilder som gjør at du kan få det i akkurat den størrelse du ønsker.",
+  "introHeading": "Fang bygningers sjel",
+  "seoDescription": "Profesjonell arkitekturfotografi som fanger bygningers essens og detaljer. Vakre bilder til veggen din i høyeste kvalitet.",
+  "order": 2
+}

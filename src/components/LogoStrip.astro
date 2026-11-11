@@ -1,0 +1,20 @@
+---
+interface Props { logos: { key: string; name: string; image: { src: string; alt: string } }[] }
+const { logos } = Astro.props;
+const IMG = 'h-8 md:h-10 w-auto object-contain opacity-60 hover:opacity-100 transition-opacity duration-300 filter brightness-0 invert';
+// The list is rendered twice for the endless CSS scroll (logo-scroll keyframes in the original stylesheet).
+const loop = [...logos.map((l) => ({ ...l, dup: false })), ...logos.map((l) => ({ ...l, dup: true }))];
+---
+{logos.length > 0 && (
+<section class="py-8 bg-dark-deeper overflow-hidden" aria-label="Kunder">
+  <div class="relative">
+    <div class="flex logo-scroll">
+      {loop.map((l) => (
+        <div class="flex-shrink-0 mx-8 md:mx-12 flex items-center justify-center h-12" aria-hidden={l.dup ? 'true' : 'false'}>
+          <img src={l.image.src} alt={l.dup ? '' : l.image.alt || l.name} loading="lazy" class={IMG} />
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+)}

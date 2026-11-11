@@ -1,0 +1,53 @@
+{
+  "id": "portretter",
+  "name": "Portretter og Miljøbilder",
+  "slug": "portretter",
+  "cover": {
+    "alt": "Portrettfotografi",
+    "src": "/images/published/seed/hero-3.webp",
+    "thumb": "/images/published/seed/hero-3.webp"
+  },
+  "intro": "Et profesjonelt headshot er ikke bare et bilde – det er ditt førsteinntrykk. På LinkedIn, på nettsiden, i presentasjoner eller i søknadsbunken. Vil du bli valgt bort – eller valgt inn?\n\nSe ut som den du faktisk er – kompetent, trygg og til å stole på.\n\nStefan guider deg gjennom hele prosessen for å få frem et uttrykk som skaper tillit og nysgjerrighet. Bildet ditt skal ikke bare vise hvem du er – det skal jobbe for deg.",
+  "images": [
+    {
+      "alt": "Janick Loewe Coach",
+      "key": "3c43441e",
+      "src": "/images/1772745844140.jpg",
+      "thumb": "/images/1772745844140.jpg"
+    },
+    {
+      "alt": "Fotografi av Stefan Borup",
+      "key": "0nv6bpbm",
+      "src": "/images/published/seed/hero-1.webp",
+      "thumb": "/images/published/seed/hero-1.webp"
+    },
+    {
+      "alt": "Fotografi av Stefan Borup",
+      "key": "46p4y3fs",
+      "src": "/images/published/seed/hero-2.webp",
+      "thumb": "/images/published/seed/hero-2.webp"
+    },
+    {
+      "alt": "Portrett av Stefan Borup",
+      "key": "efdqbwtl",
+      "src": "/images/published/seed/hero-3.webp",
+      "thumb": "/images/published/seed/hero-3.webp"
+    },
+    {
+      "alt": "Bak kulissene",
+      "key": "mburv1y8",
+      "src": "/images/published/seed/latest-session.webp",
+      "thumb": "/images/published/seed/latest-session.webp"
+    }
+  ],
+  "layout": "portrait",
+  "ctaText": "Sørg for at du gjør inntrykk før du engang har sagt hei. Ta kontakt for å booke en portrett-session.",
+  "visible": true,
+  "ctaLabel": "Book nå",
+  "seoTitle": "Portrett og Miljøbilder | Stefan Borup Foto",
+  "ctaHeading": "Book din session i dag",
+  "heroSubtitle": "Før du får sagt ett ord – har bildet ditt allerede talt.",
+  "introHeading": "Ditt førsteinntrykk",
+  "seoDescription": "Profesjonelle portretter og headshots som gjør inntrykk. Se ut som den du faktisk er – kompetent, trygg og til å stole på.",
+  "order": 0
+}

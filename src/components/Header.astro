@@ -1,0 +1,73 @@
+---
+import Icon from './Icon.astro';
+import { getGalleries, galleryHref } from '../lib/content';
+interface Props { light?: boolean; isHome?: boolean }
+const { light = false, isHome = false } = Astro.props;
+const services = (await getGalleries()).map((g) => ({ href: galleryHref(g.slug), label: g.name }));
+const links = [
+  { href: '/portefolje', label: 'Portefølje' },
+  { href: '/om-stefan', label: 'Om Stefan' },
+  { href: isHome ? '#kontakt' : '/#kontakt', label: 'Kontakt' },
+];
+const top = light ? 'bg-transparent py-6 text-gray-900' : 'bg-transparent py-6';
+const scrolled = light ? 'bg-white/95 backdrop-blur-sm py-4 text-gray-900' : 'bg-background/95 backdrop-blur-sm py-4';
+---
+<header class={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${top}`} data-site-header data-top={top} data-scrolled={scrolled}>
+  <div class="container-custom flex items-center justify-between">
+    <a class="flex items-center" href="/"><img src="/images/logo-stefan-borup.png" alt="Stefan Borup" class={`h-6 md:h-8 w-auto ${light ? 'invert' : ''}`} /></a>
+    <nav class="hidden md:flex items-center gap-8">
+      <div class="relative group" data-services-menu>
+        <button class="nav-link flex items-center gap-1">Tjenester<Icon name="chevron-down" size={16} class="transition-transform" /></button>
+        <div class="absolute top-full left-0 w-56 h-3" hidden data-services-panel></div>
+        <div class="absolute top-full left-0 pt-3 w-56" hidden data-services-panel>
+          <div class="bg-card/95 backdrop-blur-md border border-border rounded-lg shadow-xl py-2 ring-1 ring-black/10">
+            {services.map((s) => <a class="block px-4 py-3 text-sm text-foreground/80 hover:text-gold hover:bg-muted/50 transition-colors" href={s.href}>{s.label}</a>)}
+          </div>
+        </div>
+      </div>
+      {links.map((l) => <a class="nav-link" href={l.href}>{l.label}</a>)}
+    </nav>
+    <button class="md:hidden p-2" aria-label="Toggle menu" data-menu-toggle>
+<Icon name="menu" size={24} /></button>
+    <template data-icon-menu><Icon name="menu" size={24} /></template>
+    <template data-icon-x><Icon name="x" size={24} /></template>
+  </div>
+  <div class="md:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-sm border-t border-border" hidden data-mobile-menu>
+    <nav class="container-custom py-6 flex flex-col gap-4">
+      <div class="border-b border-border pb-4">
+        <p class="text-xs text-muted-foreground uppercase tracking-wider mb-2">Tjenester</p>
+        {services.map((s) => <a class="nav-link py-2 block" href={s.href}>{s.label}</a>)}
+      </div>
+      {links.map((l) => <a class="nav-link py-2" href={l.href}>{l.label}</a>)}
+    </nav>
+  </div>
+</header>
+<script>
+  // Header behaviour from the original React component: scroll state (>50px),
+  // hover dropdown for "Tjenester" and the mobile menu.
+  const header = document.querySelector<HTMLElement>('[data-site-header]');
+  if (header) {
+    const base = 'fixed top-0 left-0 right-0 z-50 transition-all duration-500 ';
+    const onScroll = () => { header.className = base + (window.scrollY > 50 ? header.dataset.scrolled : header.dataset.top); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    const menu = header.querySelector<HTMLElement>('[data-services-menu]')!;
+    const chevron = menu.querySelector('svg')!;
+    const setOpen = (open: boolean) => {
+      menu.querySelectorAll<HTMLElement>('[data-services-panel]').forEach((p) => (p.hidden = !open));
+      chevron.classList.toggle('rotate-180', open);
+    };
+    menu.addEventListener('mouseenter', () => setOpen(true));
+    menu.addEventListener('mouseleave', () => setOpen(false));
+
+    const toggle = header.querySelector<HTMLElement>('[data-menu-toggle]')!;
+    const panel = header.querySelector<HTMLElement>('[data-mobile-menu]')!;
+    const setMobile = (open: boolean) => {
+      panel.hidden = !open;
+      toggle.innerHTML = header.querySelector<HTMLTemplateElement>(open ? '[data-icon-x]' : '[data-icon-menu]')!.innerHTML;
+    };
+    toggle.addEventListener('click', () => setMobile(panel.hidden));
+    panel.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMobile(false)));
+  }
+</script>

@@ -1,0 +1,39 @@
+---
+// Image grid + full-screen lightbox, same markup as the original gallery component.
+// aspect set (portrait galleries): fixed-ratio grid. Otherwise: masonry columns.
+import Icon from './Icon.astro';
+import type { GalleryItem } from '../lib/content';
+interface Props { items: GalleryItem[]; aspect?: string; hidden?: boolean; tab?: string }
+const { items, aspect, hidden = false, tab } = Astro.props;
+const lightboxData = JSON.stringify(items.map((i) => ({ src: i.full, title: i.title, description: i.description })));
+---
+<div data-gallery={lightboxData} data-tab-panel={tab} hidden={hidden}>
+  {items.length === 0 ? <p class="text-center py-20 text-muted-foreground">Ingen bilder ennå.</p> : (
+    <div class={aspect ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8' : 'columns-1 sm:columns-2 gap-4 md:gap-8 [column-fill:_balance]'}>
+      {items.map((item, index) => {
+        const button = (
+          <button data-index={index} class={`group relative block w-full overflow-hidden bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-300 ${aspect ?? ''}`} aria-label={`Åpne bilde: ${item.title}`}>
+            <img src={item.src} srcset={item.src !== item.full ? `${item.src} 900w, ${item.full} 2560w` : undefined} sizes="(min-width: 1024px) 50vw, (min-width: 640px) 50vw, 100vw" alt={item.title} loading={index < 3 ? 'eager' : 'lazy'} decoding="async" fetchpriority={index < 3 ? 'high' : 'auto'} class={`w-full ${aspect ? 'h-full object-cover' : 'h-auto'} transition-all duration-700 group-hover:scale-[1.015] opacity-100`} />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <div class="absolute top-3 right-3 p-2 rounded-full bg-background/30 backdrop-blur-sm text-foreground"><Icon name="expand" size={16} strokeWidth={1.5} /></div>
+              <div class="absolute bottom-0 left-0 right-0 p-5">
+                <h3 class="text-white font-medium text-base md:text-lg leading-tight">{item.title}</h3>
+                {item.category && <span class="text-white/70 text-xs uppercase tracking-[0.2em] mt-1 block">{item.category}</span>}
+                {item.description && <p class="text-white/80 text-sm mt-2 line-clamp-2 font-light">{item.description}</p>}
+              </div>
+            </div>
+          </button>
+        );
+        return aspect ? button : <div class="mb-4 md:mb-8 break-inside-avoid">{button}</div>;
+      })}
+    </div>
+  )}
+</div>
+<script>
+  import { openLightbox } from '../scripts/lightbox.ts';
+  document.querySelectorAll<HTMLElement>('[data-gallery]').forEach((gallery) => {
+    const images = JSON.parse(gallery.dataset.gallery!);
+    gallery.querySelectorAll<HTMLButtonElement>('button[data-index]').forEach((btn) =>
+      btn.addEventListener('click', () => openLightbox(images, Number(btn.dataset.index), btn)));
+  });
+</script>

@@ -1,0 +1,77 @@
+---
+import Layout from '../layouts/Layout.astro';
+import HeroCarousel from '../components/HeroCarousel.astro';
+import LogoStrip from '../components/LogoStrip.astro';
+import Testimonials from '../components/Testimonials.astro';
+import ContactSection from '../components/ContactSection.astro';
+import { getSite, paragraphs } from '../lib/content';
+import { buttonClass } from '../lib/ui';
+const site = await getSite();
+const { intro, about, services, latestShoot, contact } = site;
+---
+<Layout wrapperClass="min-h-screen bg-background text-foreground">
+  <main>
+    <HeroCarousel slides={site.hero.slides} />
+    <LogoStrip logos={site.logos} />
+    <section class="section-padding bg-dark-deeper" id="portefolje">
+      <div class="container-custom text-center max-w-4xl mx-auto">
+        <h2 class="heading-md text-gold mb-6">{intro.title}</h2>
+        <p class="body-lg text-muted-foreground whitespace-pre-line">{intro.text}</p>
+      </div>
+    </section>
+    <section class="section-padding bg-background" id="om-stefan">
+      <div class="container-custom">
+        <div class="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <div class="relative"><img src={about.image.src} alt={about.image.alt} decoding="async" loading="lazy" class="w-full h-auto" /></div>
+          <div class="space-y-6">
+            <h2 class="heading-lg">{about.title}</h2>
+            <p class="body-md text-muted-foreground whitespace-pre-line">{about.text}</p>
+            <a href="/om-stefan"><button class={buttonClass('outline', 'uppercase tracking-wider text-sm mt-4')}>Les mer</button></a>
+          </div>
+        </div>
+        {about.quote && <div class="mt-20 max-w-4xl mx-auto text-center"><blockquote class="heading-md italic text-muted-foreground">« {about.quote} »</blockquote></div>}
+      </div>
+    </section>
+    {services.length > 0 && (
+      <section class="section-padding bg-dark-surface">
+        <div class="container-custom space-y-24">
+          {services.map((s, i) => {
+            const odd = i % 2 === 1;
+            return (
+              <div class="grid md:grid-cols-2 gap-12 lg:gap-20 items-center">
+                <div class={`space-y-6 ${odd ? '' : 'order-2 md:order-1'}`}>
+                  <h3 class="heading-md text-gold">{s.title}</h3>
+                  {s.lead && <p class="body-md font-semibold text-foreground">{s.lead}</p>}
+                  {paragraphs(s.body).map((p) => <p class="body-md text-muted-foreground">{p}</p>)}
+                  {s.buttonLabel && s.link && <a href={s.link}><button class={buttonClass(i === 0 ? 'default' : 'outline', 'uppercase tracking-wider text-sm mt-4')}>{s.buttonLabel}</button></a>}
+                  {s.closing && <p class="text-sm text-muted-foreground">{s.closing}</p>}
+                </div>
+                <div class={odd ? 'order-first' : 'order-1 md:order-2'}>
+                  <img src={s.image.src} alt={s.image.alt || s.title} decoding="async" loading="lazy" class="w-full h-auto" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    )}
+    <Testimonials heading={site.testimonials.heading} items={site.testimonials.items} />
+    <LogoStrip logos={site.logos} />
+    <section class="relative h-[70vh] min-h-[500px] overflow-hidden">
+      <div class="absolute inset-0">
+        <img src={latestShoot.image.src} alt={latestShoot.image.alt} decoding="async" loading="lazy" class="w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent"></div>
+      </div>
+      <div class="relative z-10 h-full flex items-center">
+        <div class="container-custom">
+          <div class="max-w-xl space-y-6">
+            <h2 class="heading-xl">{latestShoot.title}</h2>
+            <p class="body-lg text-muted-foreground whitespace-pre-line">{latestShoot.text}</p>
+            <a href={latestShoot.link}><button class={buttonClass('outline', 'uppercase tracking-wider text-sm')}>{latestShoot.buttonLabel}</button></a>
+          </div>
+        </div>
+      </div>
+    </section>
+    <ContactSection title={contact.title} text={contact.text} />
+  </main>
+</Layout>

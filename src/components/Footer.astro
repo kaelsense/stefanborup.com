@@ -1,0 +1,49 @@
+---
+import Icon from './Icon.astro';
+import { getGalleries, getSite, galleryHref } from '../lib/content';
+const { footer } = await getSite();
+const services = (await getGalleries()).map((g) => ({ href: galleryHref(g.slug), label: g.name }));
+const link = 'text-sm text-muted-foreground hover:text-foreground transition-colors';
+const socials = [
+  { href: footer.facebook, label: 'Facebook', icon: 'facebook' },
+  { href: footer.instagram, label: 'Instagram', icon: 'instagram' },
+  { href: footer.linkedin, label: 'LinkedIn', icon: 'linkedin' },
+].filter((s) => s.href);
+const year = new Date().getFullYear();
+---
+<footer class="py-12 bg-background border-t border-border">
+  <div class="container-custom">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      <div class="md:col-span-2">
+        <a class="inline-block mb-4" href="/"><img src="/images/logo-stefan-borup.png" alt="Stefan Borup" class="h-6 w-auto" /></a>
+        <p class="text-sm text-muted-foreground max-w-md">{footer.description}</p>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-4">Tjenester</h4>
+        <nav class="flex flex-col gap-2">
+          {services.map((s) => <a class={link} href={s.href}>{s.label}</a>)}
+          <a class={link} href="/portefolje">Portefølje</a>
+        </nav>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-4">Kontakt</h4>
+        <nav class="flex flex-col gap-2">
+          {footer.email && <a class={`${link} inline-flex items-center gap-2`} href={`mailto:${footer.email}`}><Icon name="mail" size={14} />{' '}{footer.email}</a>}
+          {footer.phone && <a class={`${link} inline-flex items-center gap-2`} href={`tel:${footer.phone.replace(/\s/g, '')}`}><Icon name="phone" size={14} />{' '}{footer.phone}</a>}
+          <a class={link} href="/bestilling">Book en session</a>
+          <a class={link} href="/om-stefan">Om Stefan</a>
+        </nav>
+      </div>
+    </div>
+    <div class="flex flex-col md:flex-row items-center justify-between gap-6 pt-8 border-t border-border">
+      <div class="flex items-center gap-6">
+        {socials.map((s) => <a href={s.href} target="_blank" rel="noopener noreferrer" class="text-muted-foreground hover:text-gold transition-colors" aria-label={s.label}><Icon name={s.icon} size={20} /></a>)}
+      </div>
+      <p class="text-sm text-muted-foreground">© <span data-year>{year}</span> Stefan Borup. Alle rettigheter reservert.</p>
+    </div>
+  </div>
+</footer>
+<script>
+  // The original printed the visitor's current year.
+  document.querySelectorAll('[data-year]').forEach((el) => (el.textContent = String(new Date().getFullYear())));
+</script>
