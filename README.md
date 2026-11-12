@@ -37,6 +37,7 @@ npm test          # unit tests: form validation, payload, calendar, api/lead.ts 
 | `src/lib/forms/` | Form validation, payload and the **backend seam** |
 | `public/assets/index-DBKj67Oc.css` | The original compiled Tailwind CSS, under its original hashed name. It is unchanged, which is what keeps the look identical. Do not regenerate it. If you ever edit it, give it a new file name, because Vercel caches `/assets/*` as immutable for a year. |
 | `api/lead.ts` | Vercel serverless function `POST /api/lead`: server-side validation, a honeypot check and one email through Resend |
+| `api/dropbox-webhook.ts`, `scripts/sync-dropbox.ts`, `src/lib/dropbox/` | Gallery from Dropbox (see below) |
 | `vercel.json` | Vercel config: Astro preset, `dist/`, clean URLs, no trailing slash, `www` → apex |
 | `public/images/` | All images, stored locally. They were previously hosted on Supabase Storage, Unsplash and Google Storage. |
 
@@ -155,5 +156,51 @@ The Supabase admin (`/admin`) no longer controls the site. To change content:
 1. Edit `src/content/site.json` or `src/content/galleries/*.json`.
 2. Put new images in `public/images/`.
 3. Commit and push. Vercel rebuilds and redeploys.
+
+Gallery images and categories come from Dropbox once it is configured (next section). The texts on the gallery pages still live in `src/content/galleries/*.json`.
+
+## Gallery from Dropbox
+
+When the Dropbox env vars are set, the portfolio and the gallery pages are filled from a Dropbox folder. Nothing else on the site changes.
+
+**Folder convention** (inside the Dropbox app folder, `Apps/<app name>/`):
+
+| In Dropbox | On the site |
+|---|---|
+| `01 Portretter/`, `02 Produktbilder/`, `03 Arkitektur/` | One category per subfolder. The number sets the order and is not shown. The slug comes from the name (`portretter`). |
+| A folder without a number | Comes after the numbered ones, alphabetically |
+| A folder starting with `_` (e.g. `_Utkast/`) | Ignored |
+| `cover.jpg` or `forside.jpg` in a category | Hero image of the category page (not shown in the grid). Without it, the JSON cover or the first image is used. |
+| Image files (`jpg`, `jpeg`, `png`, `webp`, `tif`, `tiff`, `avif`) | Sorted by file name. The file name is the alt text (`01 Kari Nordmann.jpg` → "Kari Nordmann"); camera names like `IMG_1234` fall back to the category name. |
+
+**Categories and texts.** When Dropbox has at least one category with images, Dropbox decides which categories exist. A category whose slug (or name) matches a file in `src/content/galleries/` keeps that file's name, texts, SEO and layout. A new folder becomes a new category at `/galleri/<slug>` with neutral default texts, and it shows up in the menu and on `/portefolje` automatically. A JSON gallery without a Dropbox folder is then hidden. Keep `portretter`, `produktbilder` and `arkitektur`, because the home page links to them.
+
+**How it runs.**
+
+1. `npm run build` first runs `scripts/sync-dropbox.ts`. It lists the folder through the Dropbox API, downloads new images, and writes two WebP sizes (900 and 2560 px wide, EXIF and GPS stripped) to `public/images/dropbox/`, plus `src/generated/dropbox-galleries.json`. Both are gitignored.
+2. Images already published on the live site (its `/images/dropbox/manifest.json`) are copied from there instead of downloaded again, so only new or changed images are processed.
+3. Without the env vars the script does nothing and the JSON images are used (local dev, tests). With them, a Dropbox error fails the build, so the previous deployment stays live.
+4. Dropbox calls `api/dropbox-webhook.ts` when anything in the folder changes. The function checks the signature and triggers a Vercel deploy hook. New images are live about 1 to 2 minutes later.
+
+**Env vars (Vercel, Production):**
+
+| Name | Value |
+|---|---|
+| `DROPBOX_APP_KEY` | App key of the Dropbox app |
+| `DROPBOX_APP_SECRET` | App secret (verifies webhook signatures) |
+| `DROPBOX_REFRESH_TOKEN` | From `npm run dropbox:auth -- <app key>` |
+| `VERCEL_DEPLOY_HOOK_URL` | Deploy hook for `main` (Project → Settings → Git → Deploy Hooks) |
+| `DROPBOX_ROOT_PATH` | Optional: a subfolder inside the app folder, e.g. `/Nettside` |
+
+**Setup, once.**
+
+1. At https://www.dropbox.com/developers/apps, create an app: *Scoped access*, *App folder*. Under Permissions, tick `files.metadata.read` and `files.content.read` and submit.
+2. Run `npm run dropbox:auth -- <app key>`, open the link while logged in to the Dropbox account that holds the photos, approve, and paste the code back. This prints the refresh token.
+3. Create the deploy hook in Vercel and set the env vars above. Redeploy.
+4. In the Dropbox app settings, add the webhook URI `https://<production domain>/api/dropbox-webhook`.
+
+**Moving to another Dropbox account** (e.g. from Kay's to Stefan's): run step 2 with the new account, replace `DROPBOX_REFRESH_TOKEN`, and put the folders in the new account's `Apps/<app name>/`. No code changes.
+
+If you upload many photos at once, Dropbox may notify several times and Vercel may run a few builds in a row. That is harmless: images that are already live are copied, not processed again.
 
 The HubSpot embed on `/bestilling` (portal `143788873`, form `2fca001b-…`) is kept as it was and does not use `/api/lead`. The HubSpot form currently returns 404, both live and here, so it needs fixing or removing in HubSpot.
