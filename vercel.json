@@ -15,6 +15,7 @@
     }
   ],
   "functions": {
-    "api/lead.ts": { "maxDuration": 10 }
+    "api/lead.ts": { "maxDuration": 10 },
+    "api/dropbox-webhook.ts": { "maxDuration": 10 }
   }
 }

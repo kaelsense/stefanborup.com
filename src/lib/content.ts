@@ -1,4 +1,14 @@
 import { getCollection, getEntry } from 'astro:content';
+import { existsSync, readFileSync } from 'node:fs';
+import { mergeGalleries, type SyncedData } from './dropbox/merge.ts';
+
+/** Written by scripts/sync-dropbox.ts before the build. Missing when Dropbox is not configured. */
+export const DROPBOX_DATA_FILE = 'src/generated/dropbox-galleries.json';
+
+function readDropboxData(): SyncedData | null {
+  if (!existsSync(DROPBOX_DATA_FILE)) return null;
+  return JSON.parse(readFileSync(DROPBOX_DATA_FILE, 'utf8')) as SyncedData;
+}
 
 /** Slugs that have their own top-level URL on the live site. */
 export const RESERVED_GALLERY_SLUGS = ['arkitektur', 'produktbilder', 'portretter'];
@@ -9,7 +19,7 @@ export const galleryHref = (slug: string) =>
 
 export async function getGalleries() {
   const all = await getCollection('galleries');
-  return all.map((g) => g.data).sort((a, b) => a.order - b.order);
+  return mergeGalleries(all.map((g) => g.data), readDropboxData());
 }
 
 export async function getSite() {
