@@ -12,7 +12,7 @@ const links = [
 const top = light ? 'bg-transparent py-6 text-gray-900' : 'bg-transparent py-6';
 const scrolled = light ? 'bg-white/95 backdrop-blur-sm py-4 text-gray-900' : 'bg-background/95 backdrop-blur-sm py-4';
 ---
-<header class={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${top}`} data-site-header data-top={top} data-scrolled={scrolled}>
+<header class={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${top}`} data-site-header data-light={light || undefined} data-top={top} data-scrolled={scrolled}>
   <div class="container-custom flex items-center justify-between">
     <a class="flex items-center" href="/"><img src="/images/logo-stefan-borup.png" alt="Stefan Borup" class={`h-6 md:h-8 w-auto ${light ? 'invert' : ''}`} /></a>
     <nav class="hidden md:flex items-center gap-8">
@@ -32,7 +32,7 @@ const scrolled = light ? 'bg-white/95 backdrop-blur-sm py-4 text-gray-900' : 'bg
     <template data-icon-menu><Icon name="menu" size={24} /></template>
     <template data-icon-x><Icon name="x" size={24} /></template>
   </div>
-  <div class="md:hidden absolute top-full left-0 right-0 bg-background/98 backdrop-blur-sm border-t border-border" hidden data-mobile-menu>
+  <div class={`md:hidden absolute top-full left-0 right-0 ${light ? 'bg-white' : 'bg-background'} border-t border-border`} hidden data-mobile-menu>
     <nav class="container-custom py-6 flex flex-col gap-4">
       <div class="border-b border-border pb-4">
         <p class="text-xs text-muted-foreground uppercase tracking-wider mb-2">Tjenester</p>
@@ -42,6 +42,13 @@ const scrolled = light ? 'bg-white/95 backdrop-blur-sm py-4 text-gray-900' : 'bg
     </nav>
   </div>
 </header>
+<style>
+  /* Open mobile menu: solid dark background that fills the rest of the screen,
+     and the header bar above it turns dark too so no photo shows through. */
+  [data-mobile-menu] { height: calc(100dvh - 100%); overflow-y: auto; }
+  [data-site-header][data-menu-open] { background-color: hsl(var(--background)); }
+  [data-site-header][data-light][data-menu-open] { background-color: #fff; }
+</style>
 <script>
   // Header behaviour from the original React component: scroll state (>50px),
   // hover dropdown for "Tjenester" and the mobile menu.
@@ -65,6 +72,7 @@ const scrolled = light ? 'bg-white/95 backdrop-blur-sm py-4 text-gray-900' : 'bg
     const panel = header.querySelector<HTMLElement>('[data-mobile-menu]')!;
     const setMobile = (open: boolean) => {
       panel.hidden = !open;
+      header.toggleAttribute('data-menu-open', open);
       toggle.innerHTML = header.querySelector<HTMLTemplateElement>(open ? '[data-icon-x]' : '[data-icon-menu]')!.innerHTML;
     };
     toggle.addEventListener('click', () => setMobile(panel.hidden));
