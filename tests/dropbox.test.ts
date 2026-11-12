@@ -119,7 +119,7 @@ test('webhook: answers the Dropbox verification challenge', async () => {
 test('webhook: valid signature triggers the deploy hook', async () => {
   const body = JSON.stringify({ list_folder: { accounts: ['dbid:1'] }, delta: { users: [1] } });
   const m = mockFetch();
-  const res = await handleDropboxWebhook(new Request('https://stefanborup.com/api/dropbox-webhook', { method: 'POST', body, headers: { 'x-dropbox-signature': await signature(SECRET, body) } }), { env: hookEnv, fetch: m.fn });
+  const res = await handleDropboxWebhook(new Request('https://stefanborup.com/api/dropbox-webhook', { method: 'POST', body, headers: { 'x-dropbox-signature': await signature(SECRET, body) } }), { env: hookEnv, fetch: m.fn, info: silent });
   assert.equal(res.status, 200);
   assert.deepEqual(m.calls, [hookEnv.VERCEL_DEPLOY_HOOK_URL]);
 });
@@ -127,7 +127,7 @@ test('webhook: valid signature triggers the deploy hook', async () => {
 test('webhook: wrong or missing signature is rejected without deploying', async () => {
   const m = mockFetch();
   for (const sig of ['deadbeef', '']) {
-    const res = await handleDropboxWebhook(new Request('https://stefanborup.com/api/dropbox-webhook', { method: 'POST', body: '{}', headers: sig ? { 'x-dropbox-signature': sig } : {} }), { env: hookEnv, fetch: m.fn });
+    const res = await handleDropboxWebhook(new Request('https://stefanborup.com/api/dropbox-webhook', { method: 'POST', body: '{}', headers: sig ? { 'x-dropbox-signature': sig } : {} }), { env: hookEnv, fetch: m.fn, log: silent });
     assert.equal(res.status, 403);
   }
   assert.equal(m.calls.length, 0);
