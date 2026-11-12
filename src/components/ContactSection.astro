@@ -6,7 +6,8 @@ import Icon from './Icon.astro';
 import { renderCalendar } from '../lib/calendar';
 import { PHOTO_PACKAGES, ADDITIONAL_SERVICES } from '../lib/forms/lead';
 import { LABEL, INPUT, TEXTAREA, CHECKBOX, SELECT_TRIGGER, buttonClass } from '../lib/ui';
-interface Props { title: string; text: string }
+// title/text are optional: /bestilling has its own page heading and leaves them out.
+interface Props { title?: string; text?: string }
 const { title, text } = Astro.props;
 // Cloudflare Turnstile site key (public). Set PUBLIC_TURNSTILE_SITE_KEY in Vercel;
 // without it the widget is left out and the server skips the check if its secret is also unset.
@@ -24,12 +25,14 @@ type F = ReturnType<typeof field>;
 const HIDDEN_SELECT = 'position: absolute; border: 0px; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; overflow-wrap: normal;';
 const HIDDEN_CHECK = 'position: absolute; pointer-events: none; opacity: 0; margin: 0px; transform: translateX(-100%); width: 16px; height: 16px;';
 ---
-<section class="section-padding bg-dark-deeper" id="kontakt">
+<section class="section-padding bg-dark-deeper text-foreground" id="kontakt">
   <div class="container-custom">
-    <div class="text-center mb-12">
-      <h2 class="heading-md text-gold mb-4">{title}</h2>
-      <p class="body-md text-muted-foreground">{text}</p>
-    </div>
+    {(title || text) && (
+      <div class="text-center mb-12">
+        {title && <h2 class="heading-md text-gold mb-4">{title}</h2>}
+        {text && <p class="body-md text-muted-foreground">{text}</p>}
+      </div>
+    )}
     <div class="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto" data-lead>
       <div class="space-y-6">
         <div>

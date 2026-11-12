@@ -1,30 +1,16 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import ContactSection from '../components/ContactSection.astro';
 ---
 <Layout title="Bestilling | Stefan Borup Fotograf" description="Bestill fotografering fra Stefan Borup. Portretter, produktbilder og arkitekturfotografi i Lillestrøm og omegn." wrapperClass="min-h-screen bg-white text-gray-900" lightHeader>
-  <main class="pt-32 pb-20">
+  <main class="pt-32">
     <div class="container-custom max-w-3xl mx-auto">
       <div class="text-center mb-12">
         <h1 class="text-4xl md:text-5xl font-bold mb-4 text-gray-900">Bestilling</h1>
         <p class="text-gray-600 text-lg max-w-xl mx-auto">Fyll ut skjemaet under for å bestille fotografering. Jeg tar kontakt med deg for å avtale nærmere detaljer.</p>
       </div>
-      <!-- Third-party HubSpot form embed, kept as on the original site (works off-platform). -->
-      <div id="hubspot-form-container" class="hs-form-frame"></div>
     </div>
+    <!-- Same booking form as the front page (#kontakt): Turnstile + Resend via api/lead.ts. -->
+    <ContactSection />
   </main>
 </Layout>
-<script is:inline>
-  (function () {
-    var create = function () {
-      var el = document.getElementById('hubspot-form-container');
-      if (!window.hbspt || !el) return;
-      el.innerHTML = '';
-      window.hbspt.forms.create({ region: 'eu1', portalId: '143788873', formId: '2fca001b-9f2b-453b-8926-1162e445e44e', target: '#hubspot-form-container' });
-    };
-    var s = document.createElement('script');
-    s.src = 'https://js-eu1.hsforms.net/forms/v2.js';
-    s.charset = 'utf-8';
-    s.onload = create;
-    document.head.appendChild(s);
-  })();
-</script>
