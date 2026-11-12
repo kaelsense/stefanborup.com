@@ -167,13 +167,13 @@ When the Dropbox env vars are set, the portfolio and the gallery pages are fille
 
 | In Dropbox | On the site |
 |---|---|
-| `01 Portretter/`, `02 Produktbilder/`, `03 Arkitektur/` | One category per subfolder. The number sets the order and is not shown. The slug comes from the name (`portretter`). |
-| A folder without a number | Comes after the numbered ones, alphabetically |
+| `01 Portretter/`, `02 Produktbilder/`, `03 Arkitektur/` | One category per subfolder. The number is not shown. The slug comes from the name (`portretter`). |
+| Order | Services keep the home page order. New categories follow, by folder number, then alphabetically. |
 | A folder starting with `_` (e.g. `_Utkast/`) | Ignored |
 | `cover.jpg` or `forside.jpg` in a category | Hero image of the category page (not shown in the grid). Without it, the JSON cover or the first image is used. |
 | Image files (`jpg`, `jpeg`, `png`, `webp`, `tif`, `tiff`, `avif`) | Sorted by file name. The file name is the alt text (`01 Kari Nordmann.jpg` → "Kari Nordmann"); camera names like `IMG_1234` fall back to the category name. |
 
-**Categories and texts.** When Dropbox has at least one category with images, Dropbox decides which categories exist. A category whose slug (or name) matches a file in `src/content/galleries/` keeps that file's name, texts, SEO and layout. A new folder becomes a new category at `/galleri/<slug>` with neutral default texts, and it shows up in the menu and on `/portefolje` automatically. A JSON gallery without a Dropbox folder is then hidden. Keep `portretter`, `produktbilder` and `arkitektur`, because the home page links to them.
+**Services and categories.** The three services (`portretter`, `produktbilder`, `arkitektur` in `src/content/galleries/`) are the ones on the home page, in the "Tjenester" menu and as tabs on `/portefolje`. Each service takes its images from the Dropbox folder with the same name or slug (`01 Portretter` or `Portretter og Miljøbilder`), so `/portretter` and the "Portretter" tab on `/portefolje` both show that folder. A service always keeps its texts, SEO, layout and place in the order. Without a matching folder, or while it is empty, it keeps the images in its JSON file. A Dropbox folder that matches no service becomes a new category at `/galleri/<slug>` with neutral default texts, after the services, in the menu and on `/portefolje`.
 
 **How it runs.**
 

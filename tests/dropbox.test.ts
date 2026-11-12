@@ -68,7 +68,7 @@ test('merge: without Dropbox data the JSON galleries are used unchanged', () => 
   assert.equal(mergeGalleries(JSON_GALLERIES, empty)[0].images[0].key, 'old');
 });
 
-test('merge: Dropbox decides categories, order and images; JSON keeps the texts', () => {
+test('merge: each service takes its own folder; JSON keeps the texts; new folders become categories', () => {
   const synced: SyncedData = { syncedAt: '', galleries: [
     { slug: 'arkitektur', name: 'Arkitektur', order: 1, cover: img('c1'), images: [img('a1')] },
     { slug: 'portretter', name: 'Portretter', order: 2, cover: null, images: [img('p1'), img('p2')] },
@@ -76,15 +76,27 @@ test('merge: Dropbox decides categories, order and images; JSON keeps the texts'
     { slug: 'tom', name: 'Tom', order: 4, cover: null, images: [] },
   ] };
   const out = mergeGalleries(JSON_GALLERIES, synced);
-  assert.deepEqual(out.map((g) => g.slug), ['arkitektur', 'portretter', 'bryllup']); // produktbilder has no folder, tom has no images
-  assert.equal(out[0].cover.src, '/images/dropbox/c1-2560.webp');
-  assert.equal(out[1].name, 'Portretter og Miljøbilder');
-  assert.equal(out[1].intro, 'intro');
-  assert.equal(out[1].cover.src, '/portretter.webp');
-  assert.deepEqual(out[1].images.map((i) => i.key), ['p1', 'p2']);
-  assert.equal(out[2].name, 'Bryllup');
-  assert.equal(out[2].cover.src, '/images/dropbox/b1-2560.webp');
-  assert.equal(out[2].seoTitle, 'Bryllup | Stefan Borup Foto');
+  // Services keep their order; produktbilder has no folder and keeps its JSON images; tom is empty.
+  assert.deepEqual(out.map((g) => g.slug), ['portretter', 'produktbilder', 'arkitektur', 'bryllup']);
+  assert.equal(out[1].images[0].key, 'old');
+  assert.equal(out[2].cover.src, '/images/dropbox/c1-2560.webp');
+  assert.equal(out[3].order, 3);
+  assert.equal(out[0].name, 'Portretter og Miljøbilder');
+  assert.equal(out[0].intro, 'intro');
+  assert.equal(out[0].cover.src, '/portretter.webp');
+  assert.deepEqual(out[0].images.map((i) => i.key), ['p1', 'p2']);
+  assert.equal(out[3].name, 'Bryllup');
+  assert.equal(out[3].cover.src, '/images/dropbox/b1-2560.webp');
+  assert.equal(out[3].seoTitle, 'Bryllup | Stefan Borup Foto');
+});
+
+test('merge: a folder named like the long service name also matches', () => {
+  const synced: SyncedData = { syncedAt: '', galleries: [
+    { slug: 'portretter-og-miljobilder', name: 'Portretter og Miljøbilder', order: 1000, cover: null, images: [img('p1')] },
+  ] };
+  const out = mergeGalleries(JSON_GALLERIES, synced);
+  assert.deepEqual(out.map((g) => g.slug), ['portretter', 'produktbilder', 'arkitektur']);
+  assert.equal(out[0].images[0].key, 'p1');
 });
 
 const SECRET = 'app-secret';
