@@ -68,7 +68,7 @@ test('email formatting: all fields, Norwegian labels, HTML escaped', () => {
   assert.equal(subject, 'Ny forespørsel fra stefanborup.com – Ola Nordmann');
   for (const s of ['Navn: Ola Nordmann', 'E-post: ola@example.no', 'Telefon: 12345678', 'Ønsket dato: onsdag 11. november 2026',
     'Ønsket klokkeslett: 14:30', 'Fotopakke: Enebolig', 'Tilleggstjenester: Drone, Kveldsfoto hel bolig', 'Selgers navn: Kari Selger',
-    'Oppdragsnummer: A-123', 'Selgers adresse: Storgata 1, 2000 Lillestrøm', 'Selgers e-post: kari@example.no', 'Selgers telefon: 87654321',
+    'Oppdragsnummer: A-123', 'Adresse for fotografering: Storgata 1, 2000 Lillestrøm', 'Selgers e-post: kari@example.no', 'Selgers telefon: 87654321',
     'Ring før du kommer.']) assert.ok(text.includes(s), `text missing: ${s}`);
   assert.ok(html.includes('&lt;b&gt;Takk&lt;/b&gt;'));
   assert.ok(!html.includes('<b>Takk</b>'));

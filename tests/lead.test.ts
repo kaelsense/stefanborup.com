@@ -55,3 +55,14 @@ test('calendar: November 2026 has 5 Sunday-first rows, today and earlier disable
   assert.equal(isDisabled(new Date(2026, 10, 10), now), true);
   assert.equal(isDisabled(new Date(2026, 10, 11), now), false);
 });
+
+test('payload: «Andre oppdrag» keeps the address but drops add-ons and seller info', () => {
+  const p = buildLeadPayload({
+    ...emptyLeadForm(), firstName: 'Ola', email: 'ola@example.no', photoPackage: 'andre_oppdrag',
+    sellerAddress: 'Storgata 1, 2000 Lillestrøm', additionalServices: ['drone'], floorPlan: true,
+    sellerName: 'Kari', sellerEmail: 'kari@example.no', sellerPhone: '123', assignmentNumber: 'A-1',
+  }, null, '');
+  assert.equal(p.photo_package, 'andre_oppdrag');
+  assert.equal(p.seller_address, 'Storgata 1, 2000 Lillestrøm');
+  assert.deepEqual([p.additional_services, p.floor_plan, p.seller_name, p.seller_email, p.seller_phone, p.assignment_number], [null, false, null, null, null, null]);
+});

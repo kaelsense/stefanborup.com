@@ -28,7 +28,11 @@ export const PHOTO_PACKAGES = [
   { value: 'rekkehus', label: 'Rekkehus/tomannsbolig' },
   { value: 'enebolig', label: 'Enebolig' },
   { value: 'fasadebilder', label: 'Fasadebilder' },
+  { value: 'andre_oppdrag', label: 'Andre oppdrag' },
 ];
+
+/** Not a property shoot: the form hides add-ons and seller info, and they are not sent. */
+export const OTHER_ASSIGNMENT = 'andre_oppdrag';
 
 export const ADDITIONAL_SERVICES = [
   { id: 'kveldsfoto_7_10', label: 'Kveldsfoto 7-10 bilder' },
@@ -49,7 +53,7 @@ const RULES: Partial<Record<keyof LeadForm, Rule[]>> = {
   email: [(v) => (EMAIL.test(v) ? null : 'Ugyldig e-postadresse'), max(255, 'E-post må være under 255 tegn')],
   phone: [max(20, 'Telefonnummer må være under 20 tegn')],
   sellerName: [max(200, 'Selgers navn må være under 200 tegn')],
-  sellerAddress: [max(300, 'Selgers adresse må være under 300 tegn')],
+  sellerAddress: [max(300, 'Adressen må være under 300 tegn')],
   sellerEmail: [(v) => (v === '' || EMAIL.test(v) ? null : 'Ugyldig e-postadresse'), max(255, 'String must contain at most 255 character(s)')],
   sellerPhone: [max(20, 'Telefonnummer må være under 20 tegn')],
   assignmentNumber: [max(50, 'Oppdragsnummer må være under 50 tegn')],
@@ -83,6 +87,8 @@ const localIsoDate = (d: Date) =>
  */
 export function buildLeadPayload(data: LeadForm, date: Date | null, time: string) {
   const day = date ? localIsoDate(date) : null;
+  // Add-ons and seller info only apply to property shoots; drop anything typed before switching.
+  const property = data.photoPackage !== OTHER_ASSIGNMENT;
   return {
     name: `${data.firstName} ${data.lastName || ''}`.trim(),
     first_name: data.firstName,
@@ -90,13 +96,13 @@ export function buildLeadPayload(data: LeadForm, date: Date | null, time: string
     email: data.email,
     phone: data.phone || null,
     photo_package: data.photoPackage || null,
-    additional_services: data.additionalServices.length ? data.additionalServices : null,
-    floor_plan: data.floorPlan || false,
-    seller_name: data.sellerName || null,
+    additional_services: property && data.additionalServices.length ? data.additionalServices : null,
+    floor_plan: property && (data.floorPlan || false),
+    seller_name: property ? data.sellerName || null : null,
     seller_address: data.sellerAddress || null,
-    seller_email: data.sellerEmail || null,
-    seller_phone: data.sellerPhone || null,
-    assignment_number: data.assignmentNumber || null,
+    seller_email: property ? data.sellerEmail || null : null,
+    seller_phone: property ? data.sellerPhone || null : null,
+    assignment_number: property ? data.assignmentNumber || null : null,
     message: data.message || null,
     preferred_date: day,
     photo_datetime: day ? `${day}T${time || '09:00'}:00` : null,
