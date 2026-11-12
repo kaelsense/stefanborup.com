@@ -18,7 +18,7 @@ const field = (id: string, label: string, opts: { placeholder: string; type?: st
 const row1 = [field('firstName', 'Fornavn', { placeholder: 'Ditt fornavn', required: true }), field('lastName', 'Etternavn', { placeholder: 'Ditt etternavn' })];
 const row2 = [field('email', 'E-post', { placeholder: 'din@epost.no', type: 'email', required: true }), field('phone', 'Telefon', { placeholder: '+47', type: 'tel' })];
 const seller1 = [field('sellerName', 'Selgers navn', { placeholder: 'Navn på selger', muted: true }), field('assignmentNumber', 'Oppdragsnummer', { placeholder: 'Oppdragsnr.', muted: true })];
-const seller2 = field('sellerAddress', 'Adresse for fotografering', { placeholder: 'Gate, nummer, postnummer og sted', muted: true });
+const address = field('sellerAddress', 'Adresse for fotografering', { placeholder: 'Gate, nummer, postnummer og sted' });
 const seller3 = [field('sellerEmail', 'Selgers e-post', { placeholder: 'selger@epost.no', type: 'email', muted: true }), field('sellerPhone', 'Selgers telefon', { placeholder: '+47', type: 'tel', muted: true })];
 type F = ReturnType<typeof field>;
 const HIDDEN_SELECT = 'position: absolute; border: 0px; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; overflow-wrap: normal;';
@@ -54,6 +54,10 @@ const HIDDEN_CHECK = 'position: absolute; pointer-events: none; opacity: 0; marg
           </div>
         ))}
         <div>
+          <label class={`${LABEL} text-sm mb-1.5 block`} for={address.id}>{address.label}</label>
+          <input type={address.type} class={input} id={address.id} placeholder={address.placeholder} value="" />
+        </div>
+        <div>
           <label class={`${LABEL} text-sm mb-1.5 block`}>Ønsket fotopakke</label>
           <button type="button" role="combobox" aria-controls="photo-package-list" aria-expanded="false" aria-autocomplete="none" dir="ltr" data-state="closed" data-placeholder="" class={`${SELECT_TRIGGER} bg-card border-border`} data-select>
             <span style="pointer-events: none;" data-select-value>Velg fotopakke</span>
@@ -63,6 +67,8 @@ const HIDDEN_CHECK = 'position: absolute; pointer-events: none; opacity: 0; marg
             {PHOTO_PACKAGES.map((p) => <option value={p.value}>{p.label}</option>)}
           </select>
         </div>
+        {/* Only for property shoots: hidden when «Andre oppdrag» is chosen (contact-form.ts). */}
+        <div class="space-y-5" data-property-only>
         <div>
           <label class={`${LABEL} text-sm mb-2 block`}>Tilleggstjenester</label>
           <div class="grid grid-cols-2 gap-3">
@@ -78,7 +84,7 @@ const HIDDEN_CHECK = 'position: absolute; pointer-events: none; opacity: 0; marg
         <div class="border-t border-border pt-5 mt-5">
           <label class={`${LABEL} text-sm text-gold mb-3 block`}>Info om selger/oppdrag</label>
           <div class="space-y-4">
-            {[seller1, seller2, seller3].map((row) => Array.isArray(row) ? (
+            {[seller1, seller3].map((row) => (
               <div class="grid grid-cols-2 gap-4">
                 {row.map((f: F) => (
                   <div>
@@ -87,13 +93,9 @@ const HIDDEN_CHECK = 'position: absolute; pointer-events: none; opacity: 0; marg
                   </div>
                 ))}
               </div>
-            ) : (
-              <div>
-                <label class={`${LABEL} text-sm mb-1.5 block text-muted-foreground`} for={row.id}>{row.label}</label>
-                <input type={row.type} class={input} id={row.id} placeholder={row.placeholder} value="" />
-              </div>
             ))}
           </div>
+        </div>
         </div>
         <div>
           <label class={`${LABEL} text-sm mb-1.5 block`} for="message">Spesielle ønsker eller kommentarer</label>

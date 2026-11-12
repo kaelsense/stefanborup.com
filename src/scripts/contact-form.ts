@@ -1,7 +1,7 @@
 // Behaviour of the front-page booking form (calendar, select, checkboxes,
 // validation, submit). Sending is delegated to the form backend seam.
 import { renderCalendar, sameDay, formatChosenDate } from '../lib/calendar.ts';
-import { emptyLeadForm, validateLead, buildLeadPayload, PHOTO_PACKAGES, type LeadForm, type LeadErrors } from '../lib/forms/lead.ts';
+import { emptyLeadForm, validateLead, buildLeadPayload, PHOTO_PACKAGES, OTHER_ASSIGNMENT, type LeadForm, type LeadErrors } from '../lib/forms/lead.ts';
 import { submitLead } from '../lib/forms/backend.ts';
 import { iconSvg } from '../lib/icons.ts';
 import { toast } from './toast.ts';
@@ -52,6 +52,9 @@ export function initContactForm() {
   const valueEl = trigger.querySelector<HTMLElement>('[data-select-value]')!;
   const native = root.querySelector<HTMLSelectElement>('[data-native-select]')!;
   let photoPackage = '';
+  // Add-ons and seller info are for property shoots only; hide them for «Andre oppdrag».
+  const propertyOnly = root.querySelector<HTMLElement>('[data-property-only]')!;
+  const syncPropertyOnly = () => (propertyOnly.hidden = photoPackage === OTHER_ASSIGNMENT);
   let popup: HTMLElement | null = null;
   const closeSelect = () => {
     popup?.remove(); popup = null;
@@ -63,6 +66,7 @@ export function initContactForm() {
     photoPackage = value; native.value = value;
     valueEl.textContent = PHOTO_PACKAGES.find((p) => p.value === value)!.label;
     trigger.removeAttribute('data-placeholder');
+    syncPropertyOnly();
     closeSelect(); trigger.focus();
   };
   const openSelect = () => {
@@ -133,7 +137,7 @@ export function initContactForm() {
     TEXT_FIELDS.forEach((id) => (el(id).value = ''));
     services.clear();
     root.querySelectorAll<HTMLButtonElement>('[data-service]').forEach((b) => { b.setAttribute('aria-checked', 'false'); b.dataset.state = 'unchecked'; b.innerHTML = ''; });
-    photoPackage = ''; valueEl.textContent = 'Velg fotopakke'; trigger.setAttribute('data-placeholder', '');
+    photoPackage = ''; valueEl.textContent = 'Velg fotopakke'; trigger.setAttribute('data-placeholder', ''); syncPropertyOnly();
     selected = null; timeInput.value = ''; drawCalendar(); drawChosen();
   };
   const submitBtn = form.querySelector<HTMLButtonElement>('button[type=submit]')!;
@@ -141,7 +145,8 @@ export function initContactForm() {
     e.preventDefault();
     showErrors({});
     const values: LeadForm = { ...emptyLeadForm(), photoPackage, additionalServices: [...services] };
-    TEXT_FIELDS.forEach((id) => ((values as Record<string, unknown>)[id] = el(id).value));
+    // Hidden fields (seller info for «Andre oppdrag») must not block or travel with the submit.
+    TEXT_FIELDS.forEach((id) => ((values as Record<string, unknown>)[id] = propertyOnly.hidden && propertyOnly.contains(el(id)) ? '' : el(id).value));
     const result = validateLead(values);
     if (!result.ok) { showErrors(result.errors); return; }
     // Cloudflare Turnstile: only present when a site key was set at build time.

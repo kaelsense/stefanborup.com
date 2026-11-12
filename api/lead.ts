@@ -163,6 +163,7 @@ export function formatLeadEmail(lead: Lead): { subject: string; text: string; ht
       ['Telefon', lead.phone],
     ]],
     ['Oppdrag', [
+      ['Adresse for fotografering', lead.seller_address],
       ['Ønsket dato', lead.preferred_date ? formatDate(lead.preferred_date) : null],
       ['Ønsket klokkeslett', lead.preferred_date ? time : null],
       ['Fotopakke', lead.photo_package ? PHOTO_PACKAGE_LABELS[lead.photo_package] : null],
@@ -172,7 +173,6 @@ export function formatLeadEmail(lead: Lead): { subject: string; text: string; ht
     ['Selger', [
       ['Selgers navn', lead.seller_name],
       ['Oppdragsnummer', lead.assignment_number],
-      ['Selgers adresse', lead.seller_address],
       ['Selgers e-post', lead.seller_email],
       ['Selgers telefon', lead.seller_phone],
     ]],
