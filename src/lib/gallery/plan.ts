@@ -8,8 +8,9 @@
 //   02 Produktbilder/      -> category "Produktbilder", order 2
 //   Arkitektur/            -> no number: sorted after the numbered ones, alphabetically
 //   _Utkast/               -> starts with "_": ignored
-//   <category>/cover.jpg   -> (or forside.jpg, or "forside--<name>") the category's hero image, not in the grid
-// Images are sorted by file name ("01 ...", "02 ..." or camera numbers both work).
+//   <category>/cover.jpg   -> (or forside.jpg) the category's hero image, not in the grid
+// In /admin, the order (drag and drop) and the starred hero image are saved in SETTINGS_PATH.
+// Images are sorted by the saved order, then by file name ("01 ...", "02 ..." or camera numbers both work).
 // The file name becomes the alt text, unless it looks like a camera name (IMG_1234).
 // Files directly in the root and files in subfolders starting with "_" are ignored.
 // Deeper subfolders inside a category are included in that category.
@@ -80,7 +81,22 @@ export const naturalCompare = (a: string, b: string) => a.localeCompare(b, 'nb',
  * Turns a recursive list_folder result into galleries.
  * `root` is the path the listing started from ('' for the app folder root).
  */
-export function planGalleries(entries: DropboxEntry[], root = ''): PlannedGallery[] {
+/** Per category folder, set in /admin: the image order (file names) and the starred image. */
+export type GallerySettings = Record<string, { order?: string[]; star?: string | null }>;
+
+/** Files in the saved order first; files not in it (new uploads) after them, by name. */
+export function sortByOrder<T extends { name: string }>(files: T[], order: string[] = []): T[] {
+  const pos = new Map(order.map((n, i) => [n, i]));
+  return [...files].sort((a, b) => {
+    const pa = pos.get(a.name), pb = pos.get(b.name);
+    if (pa !== undefined && pb !== undefined) return pa - pb;
+    if (pa !== undefined) return -1;
+    if (pb !== undefined) return 1;
+    return naturalCompare(a.name, b.name);
+  });
+}
+
+export function planGalleries(entries: DropboxEntry[], root = '', settings: GallerySettings = {}): PlannedGallery[] {
   const rootDepth = root.split('/').filter(Boolean).length;
   const byFolder = new Map<string, DropboxEntry[]>();
   const folders = new Set<string>();
@@ -112,19 +128,20 @@ export function planGalleries(entries: DropboxEntry[], root = ''): PlannedGaller
     while (usedSlugs.has(slug)) slug += '-2';
     usedSlugs.add(slug);
 
-    const files = (byFolder.get(folder) ?? []).sort((a, b) => naturalCompare(a.name, b.name));
+    const files = sortByOrder(byFolder.get(folder) ?? [], settings[folder]?.order);
     const toImage = (f: DropboxEntry): PlannedImage => ({
       id: f.id!, hash: f.content_hash!, name: f.name,
       alt: altFromFileName(f.name.split('/').pop()!.replace(COVER_PREFIX, '')),
       key: f.content_hash!.slice(0, 16),
     });
-    const isCover = (f: DropboxEntry) => {
-      const base = baseName(f.name.split('/').pop()!).toLowerCase();
-      return COVER_NAMES.includes(base) || base.startsWith(COVER_PREFIX);
-    };
-    const coverFile = files.find(isCover);
+    // The starred image (chosen in /admin) is the hero and stays in the grid.
+    // A file named cover.jpg / forside.jpg is the hero and is left out of the grid.
+    const star = settings[folder]?.star;
+    const starred = files.find((f) => f.name === star) ?? files.find((f) => f.name.split('/').pop()!.startsWith(COVER_PREFIX));
+    const coverFile = files.find((f) => COVER_NAMES.includes(baseName(f.name.split('/').pop()!).toLowerCase()));
     const images = files.filter((f) => f !== coverFile).map(toImage);
-    galleries.push({ folder, slug, name, order: order ?? UNNUMBERED_ORDER, cover: coverFile ? toImage(coverFile) : null, images });
+    const hero = starred ?? coverFile;
+    galleries.push({ folder, slug, name, order: order ?? UNNUMBERED_ORDER, cover: hero ? toImage(hero) : null, images });
   }
   return galleries.sort((a, b) => a.order - b.order || naturalCompare(a.folder, b.folder));
 }
@@ -140,6 +157,8 @@ export const imagePaths = (key: string, dir = IMAGE_DIR) => ({
 
 /** Blob pathname prefix that holds the category folders. */
 export const BLOB_ROOT = 'galleri';
+/** Blob with the GallerySettings (order and starred image per folder). */
+export const SETTINGS_PATH = `${BLOB_ROOT}/.oppsett.json`;
 
 export type BlobListItem = { pathname: string; etag: string; size?: number };
 

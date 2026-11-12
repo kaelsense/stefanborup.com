@@ -1,16 +1,17 @@
 // Vercel serverless function: /api/admin  (backend of the password-protected page /admin)
 //
-// Stefan uploads, deletes and picks cover images for the gallery categories here. Images are stored
+// Stefan uploads, deletes, sorts and stars images for the gallery categories here. Images are stored
 // privately in Vercel Blob under "galleri/<category folder>/<file>"; scripts/sync-gallery.ts turns
 // them into the public WebP files at build time. Every change ends with a call to `publish`, which
 // starts a new production build through the deploy hook.
 //
 //   POST ?a=login    {password}          -> sets the session cookie (30 days)
 //   POST ?a=logout                       -> clears it
-//   GET  ?a=list                         -> {folders: [{folder, images: [{pathname, name, etag, size}]}]}
+//   GET  ?a=list                         -> {settings, folders: [{folder, images: [{pathname, name, etag, size}]}]}
 //   POST ?a=upload   (@vercel/blob/client handleUpload body) -> client upload token for one image
 //   POST ?a=delete   {pathnames: [...]}
-//   POST ?a=cover    {pathname}          -> makes this image the category cover ("forside--<name>")
+//   POST ?a=order    {folder, names}     -> saves the image order of a category (drag and drop)
+//   POST ?a=star     {folder, name|null} -> stars the hero image of a category (or clears it)
 //   POST ?a=publish                      -> triggers the deploy hook
 //   GET  ?a=image&p=<pathname>           -> the private original (for thumbnails not yet published)
 //
@@ -22,7 +23,7 @@
 // Self-contained on purpose (no local imports), so Vercel bundles it as is. The path rules mirror
 // isGalleryImagePath / isValidFolderName in src/lib/gallery/plan.ts (tests check both agree).
 
-import { list, del, rename, get } from '@vercel/blob';
+import { list, del, put, get } from '@vercel/blob';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 
 export type Env = { ADMIN_PASSWORD?: string; BLOB_READ_WRITE_TOKEN?: string; VERCEL_DEPLOY_HOOK_URL?: string };
@@ -30,14 +31,15 @@ type BlobItem = { pathname: string; etag: string; size: number };
 export type Blob = {
   list: (prefix: string) => Promise<BlobItem[]>;
   del: (pathnames: string[]) => Promise<void>;
-  rename: (from: string, to: string) => Promise<void>;
+  readText: (pathname: string) => Promise<string | null>;
+  writeText: (pathname: string, text: string) => Promise<void>;
   get: (pathname: string) => Promise<{ stream: ReadableStream; contentType: string } | null>;
   uploadToken: (request: Request, body: HandleUploadBody, check: (pathname: string) => void) => Promise<unknown>;
 };
 export type Deps = { env: Env; blob: Blob; fetch: typeof fetch; now?: () => number; delay?: (ms: number) => Promise<void>; log?: (m: string, e?: unknown) => void };
 
 const ROOT = 'galleri';
-const COVER_PREFIX = 'forside--';
+const SETTINGS_PATH = `${ROOT}/.oppsett.json`;
 const COOKIE = 'sb_admin';
 const SESSION_DAYS = 30;
 const IMAGE_EXT = ['jpg', 'jpeg', 'png', 'webp', 'tif', 'tiff', 'avif'];
@@ -96,6 +98,13 @@ async function readJson<T>(request: Request): Promise<T | null> {
 }
 
 const fileName = (p: string) => p.split('/').pop()!;
+
+type Settings = Record<string, { order?: string[]; star?: string | null }>;
+async function readSettings(blob: Blob): Promise<Settings> {
+  const text = await blob.readText(SETTINGS_PATH);
+  if (!text) return {};
+  try { return JSON.parse(text) as Settings; } catch { return {}; }
+}
 const folderOf = (p: string) => p.split('/')[1];
 
 export async function handleAdmin(request: Request, deps: Deps): Promise<Response> {
@@ -109,7 +118,7 @@ export async function handleAdmin(request: Request, deps: Deps): Promise<Respons
     return json(500, { error: 'Opplastingssiden er ikke satt opp ennå.' });
   }
 
-  const expectPost = ['login', 'logout', 'upload', 'delete', 'cover', 'publish'].includes(action);
+  const expectPost = ['login', 'logout', 'upload', 'delete', 'order', 'star', 'publish'].includes(action);
   const expectGet = ['list', 'image'].includes(action);
   if (!expectPost && !expectGet) return json(404, { error: 'unknown action' });
   if (request.method !== (expectPost ? 'POST' : 'GET')) return json(405, { error: 'method not allowed' });
@@ -138,6 +147,7 @@ export async function handleAdmin(request: Request, deps: Deps): Promise<Respons
           folders.set(f, [...(folders.get(f) ?? []), b]);
         }
         return json(200, {
+          settings: await readSettings(deps.blob),
           folders: [...folders].map(([folder, items]) => ({
             folder,
             images: items.map((b) => ({ pathname: b.pathname, name: fileName(b.pathname), etag: b.etag, size: b.size })),
@@ -166,26 +176,25 @@ export async function handleAdmin(request: Request, deps: Deps): Promise<Respons
         await deps.blob.del(paths as string[]);
         return json(200, { ok: true });
       }
-      case 'cover': {
-        const body = await readJson<{ pathname?: unknown }>(request);
-        const p = typeof body?.pathname === 'string' ? body.pathname : '';
-        if (!isGalleryImagePath(p)) return json(400, { error: 'invalid path' });
-        const folder = folderOf(p);
-        const inFolder = (await deps.blob.list(`${ROOT}/${folder}/`)).map((b) => b.pathname).filter(isGalleryImagePath);
-        if (!inFolder.includes(p)) return json(404, { error: 'not found' });
-        const free = (name: string) => {
-          let candidate = name;
-          for (let i = 2; inFolder.includes(`${ROOT}/${folder}/${candidate}`); i++) candidate = name.replace(/(\.[^.]+)$/, ` (${i})$1`);
-          return candidate;
-        };
-        // Only one cover per folder: give the old one its own name back.
-        for (const old of inFolder) {
-          const name = fileName(old);
-          if (old !== p && name.startsWith(COVER_PREFIX)) await deps.blob.rename(old, `${ROOT}/${folder}/${free(name.slice(COVER_PREFIX.length))}`);
+      case 'order':
+      case 'star': {
+        const body = await readJson<{ folder?: unknown; names?: unknown; name?: unknown }>(request);
+        const folder = typeof body?.folder === 'string' ? body.folder : '';
+        if (!isValidFolderName(folder)) return json(400, { error: 'invalid folder' });
+        const settings = await readSettings(deps.blob);
+        const entry = { ...(settings[folder] ?? {}) };
+        if (action === 'order') {
+          const names = body?.names;
+          if (!Array.isArray(names) || names.length > 2000 || !names.every((n) => typeof n === 'string' && isGalleryImagePath(`${ROOT}/${folder}/${n}`))) return json(400, { error: 'invalid names' });
+          entry.order = names as string[];
+        } else {
+          const name = body?.name;
+          if (name !== null && (typeof name !== 'string' || !isGalleryImagePath(`${ROOT}/${folder}/${name}`))) return json(400, { error: 'invalid name' });
+          entry.star = name as string | null;
         }
-        const name = fileName(p);
-        if (!name.startsWith(COVER_PREFIX)) await deps.blob.rename(p, `${ROOT}/${folder}/${free(COVER_PREFIX + name)}`);
-        return json(200, { ok: true });
+        settings[folder] = entry;
+        await deps.blob.writeText(SETTINGS_PATH, JSON.stringify(settings));
+        return json(200, { ok: true, settings });
       }
       case 'publish': {
         if (!hook) {
@@ -220,7 +229,14 @@ const liveBlob: Blob = {
     return out;
   },
   del: (pathnames) => del(pathnames),
-  rename: async (from, to) => { await rename(from, to, { access: 'private', addRandomSuffix: false }); },
+  async readText(pathname) {
+    const res = await get(pathname, { access: 'private', useCache: false });
+    if (!res || res.statusCode !== 200 || !res.stream) return null;
+    return new Response(res.stream).text();
+  },
+  writeText: async (pathname, text) => {
+    await put(pathname, text, { access: 'private', contentType: 'application/json', addRandomSuffix: false, allowOverwrite: true });
+  },
   async get(pathname) {
     const res = await get(pathname, { access: 'private' });
     if (!res || res.statusCode !== 200 || !res.stream) return null;

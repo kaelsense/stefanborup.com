@@ -107,12 +107,22 @@ test('blob listing: folders, covers chosen in /admin and keys that change with t
     { pathname: 'galleri/.importert-fra-dropbox', etag: '"4"' },
   ];
   const g = planGalleries(await blobEntries(blobs), BLOB_ROOT);
-  assert.deepEqual(g.map((x) => [x.slug, x.images.length]), [['portretter', 1], ['bryllup', 1]]);
+  assert.deepEqual(g.map((x) => [x.slug, x.images.length]), [['portretter', 2], ['bryllup', 1]]);
   assert.equal(g[0].cover?.alt, 'Kari Nordmann');
   assert.equal(g[0].images[0].id, 'galleri/01 Portretter/b.jpg');
   const again = planGalleries(await blobEntries([{ pathname: 'galleri/01 Portretter/b.jpg', etag: '"9"' }]), BLOB_ROOT);
   assert.notEqual(again[0].images[0].key, g[0].images[0].key);
   assert.equal(g[0].images[0].key.length, 16);
+});
+
+test('saved order and star: starred image is the hero and stays in the grid; new files go last', async () => {
+  const blobs = ['a.jpg', 'b.jpg', 'c.jpg', 'ny.jpg', 'cover.jpg'].map((n, i) => ({ pathname: `galleri/Bryllup/${n}`, etag: String(i) }));
+  const [g] = planGalleries(await blobEntries(blobs), BLOB_ROOT, { Bryllup: { order: ['c.jpg', 'a.jpg', 'b.jpg', 'slettet.jpg'], star: 'a.jpg' } });
+  assert.deepEqual(g.images.map((i) => i.name), ['c.jpg', 'a.jpg', 'b.jpg', 'ny.jpg']);
+  assert.equal(g.cover?.name, 'a.jpg');
+  const [h] = planGalleries(await blobEntries(blobs), BLOB_ROOT, { Bryllup: { star: null } });
+  assert.equal(h.cover?.name, 'cover.jpg');
+  assert.deepEqual(h.images.map((i) => i.name), ['a.jpg', 'b.jpg', 'c.jpg', 'ny.jpg']);
 });
 
 test('path rules: api/admin.ts and plan.ts agree', () => {
@@ -129,15 +139,17 @@ const PASSWORD = 'riktig hest batteri';
 const NOW = 1_800_000_000_000;
 function fakeBlob(initial: string[] = []) {
   const store = new Map(initial.map((p, i) => [p, String(i)]));
+  const texts = new Map<string, string>();
   const calls: string[] = [];
   const blob: Blob = {
     list: async (prefix) => [...store].filter(([p]) => p.startsWith(prefix)).map(([pathname, etag]) => ({ pathname, etag, size: 1 })),
     del: async (ps) => { calls.push(`del ${ps.join(',')}`); ps.forEach((p) => store.delete(p)); },
-    rename: async (a, b) => { calls.push(`rename ${a} -> ${b}`); store.set(b, store.get(a)!); store.delete(a); },
+    readText: async (p) => texts.get(p) ?? null,
+    writeText: async (p, t) => { calls.push(`write ${p}`); texts.set(p, t); },
     get: async (p) => (store.has(p) ? { stream: new Response('jpeg').body!, contentType: 'image/jpeg' } : null),
     uploadToken: async (_r, body, check) => { check((body as { payload: { pathname: string } }).payload.pathname); return { type: 'blob.generate-client-token', clientToken: 't' }; },
   };
-  return { blob, store, calls };
+  return { blob, store, calls, texts };
 }
 const deps = (blob: Blob, extra: Partial<Deps> = {}): Deps => ({
   env: { ADMIN_PASSWORD: PASSWORD, BLOB_READ_WRITE_TOKEN: 'tok', VERCEL_DEPLOY_HOOK_URL: 'https://hook' },
@@ -193,14 +205,23 @@ test('admin: upload tokens only for image paths inside a category folder', async
   }
 });
 
-test('admin: delete validates paths; cover keeps one cover per folder', async () => {
-  const { blob, store, calls } = fakeBlob(['galleri/A/forside--old.jpg', 'galleri/A/new.jpg', 'galleri/A/old.jpg']);
+test('admin: delete validates paths; order and star are saved per folder', async () => {
+  const { blob, calls, texts } = fakeBlob(['galleri/A/a.jpg', 'galleri/A/b.jpg']);
   const c = await session();
   assert.equal((await handleAdmin(post('delete', { pathnames: ['../etc'] }, c), deps(blob))).status, 400);
-  assert.equal((await handleAdmin(post('cover', { pathname: 'galleri/A/new.jpg' }, c), deps(blob))).status, 200);
-  assert.deepEqual([...store.keys()].sort(), ['galleri/A/forside--new.jpg', 'galleri/A/old (2).jpg', 'galleri/A/old.jpg']);
-  assert.equal((await handleAdmin(post('delete', { pathnames: ['galleri/A/old.jpg'] }, c), deps(blob))).status, 200);
-  assert.equal(calls.at(-1), 'del galleri/A/old.jpg');
+  assert.equal((await handleAdmin(post('order', { folder: 'A', names: ['b.jpg', 'a.jpg'] }, c), deps(blob))).status, 200);
+  assert.equal((await handleAdmin(post('star', { folder: 'A', name: 'b.jpg' }, c), deps(blob))).status, 200);
+  assert.deepEqual(JSON.parse(texts.get('galleri/.oppsett.json')!), { A: { order: ['b.jpg', 'a.jpg'], star: 'b.jpg' } });
+  const list = await (await handleAdmin(req('list', { cookie: c }), deps(blob))).json() as { settings: unknown };
+  assert.deepEqual(list.settings, { A: { order: ['b.jpg', 'a.jpg'], star: 'b.jpg' } });
+  assert.equal((await handleAdmin(post('star', { folder: 'A', name: null }, c), deps(blob))).status, 200);
+  assert.equal(JSON.parse(texts.get('galleri/.oppsett.json')!).A.star, null);
+  for (const bad of [{ folder: '_x', names: [] }, { folder: 'A', names: ['../x.jpg'] }, { folder: 'A', names: 'a.jpg' }]) {
+    assert.equal((await handleAdmin(post('order', bad, c), deps(blob))).status, 400);
+  }
+  assert.equal((await handleAdmin(post('star', { folder: 'A', name: 'x.txt' }, c), deps(blob))).status, 400);
+  assert.equal((await handleAdmin(post('delete', { pathnames: ['galleri/A/a.jpg'] }, c), deps(blob))).status, 200);
+  assert.equal(calls.at(-1), 'del galleri/A/a.jpg');
 });
 
 test('admin: publish calls the deploy hook; image proxies the private original', async () => {

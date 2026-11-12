@@ -49,13 +49,19 @@ const services = (await getCollection('galleries'))
     .drop.over { border-color: var(--accent); background: #faf6ee; }
     .drop button { margin-top: 6px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-    .tile { position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #eee; }
-    .tile img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: #ddd; }
-    .tile .name { font-size: .75rem; padding: 4px 6px; background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tile .actions { display: flex; gap: 4px; padding: 0 6px 6px; background: #fff; }
-    .tile .actions button { flex: 1; font-size: .75rem; padding: .3rem .2rem; }
-    .badge { position: absolute; top: 6px; left: 6px; background: var(--accent); color: #fff; font-size: .7rem; padding: 2px 6px; border-radius: 4px; }
-    .tile.pending { opacity: .6; }
+    .tile { position: relative; border-radius: 8px; overflow: hidden; background: #ddd; cursor: grab; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+    .tile img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; pointer-events: none; }
+    .tile.ghost { opacity: .35; }
+    .tile.starred { outline: 3px solid #f5b301; outline-offset: -3px; }
+    .tile button { position: absolute; top: 6px; border: 0; padding: 0; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.45); color: #fff; }
+    .tile .star { right: 6px; }
+    .tile .star svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linejoin: round; }
+    .tile .star[aria-pressed="true"] svg { fill: #f5b301; stroke: #f5b301; }
+    .tile .star:hover svg { stroke: #f5b301; }
+    .tile .del { left: 6px; font-size: 22px; line-height: 1; opacity: 0; transition: opacity .15s; }
+    .tile:hover .del, .tile .del:focus-visible { opacity: 1; }
+    .tile .del:hover { background: var(--danger); }
+    @media (hover: none) { .tile .del { opacity: 1; } }
     .empty { color: var(--muted); font-style: italic; grid-column: 1 / -1; margin: 0; }
     .new-cat button { white-space: nowrap; }
     .new-cat { display: flex; gap: 8px; max-width: 520px; }
@@ -78,7 +84,8 @@ const services = (await getCollection('galleries'))
     <p class="help">
       Dra bilder inn i en kategori, eller trykk «Velg bilder». Bildene blir gjort mindre før de lastes opp, så det går fort.
       Nettsiden oppdateres av seg selv etter hver endring, og endringen er synlig etter et par minutter.
-      Bildene vises i rekkefølge etter filnavn. Velg «Forside» på bildet som skal være øverst på siden.
+      Dra bildene for å endre rekkefølgen (på mobil: hold fingeren på bildet litt før du drar).
+      Trykk på stjernen for å fremheve bildet som vises stort øverst på siden.
     </p>
     <div class="status" id="status" hidden></div>
     <div id="cats"></div>
