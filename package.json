@@ -8,13 +8,16 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "npm run sync:dropbox && astro build",
+    "sync:dropbox": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/sync-dropbox.ts",
+    "dropbox:auth": "node --experimental-strip-types --no-warnings=ExperimentalWarning scripts/dropbox-auth.ts",
     "preview": "astro preview",
     "astro": "astro",
     "test": "node --experimental-strip-types --test tests/*.test.ts"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",
-    "astro": "^7.4.8"
+    "astro": "^7.4.8",
+    "sharp": "^0.35.5"
   }
 }
