@@ -1,0 +1,100 @@
+---
+// /admin: password-protected page where Stefan uploads and removes gallery images.
+// Static page; all data goes through api/admin.ts. Not linked anywhere, noindex, not in the sitemap.
+import '@fontsource/montserrat/latin-400.css';
+import '@fontsource/montserrat/latin-ext-400.css';
+import '@fontsource/montserrat/latin-600.css';
+import '@fontsource/montserrat/latin-ext-600.css';
+import '@fontsource/playfair-display/latin-500.css';
+import '@fontsource/playfair-display/latin-ext-500.css';
+import { getCollection } from 'astro:content';
+
+const services = (await getCollection('galleries'))
+  .map((g) => g.data)
+  .filter((g) => g.visible)
+  .sort((a, b) => a.order - b.order)
+  .map((g) => ({ slug: g.slug, name: g.name }));
+---
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Bilder | Stefan Borup Foto</title>
+  <link rel="icon" href="/favicon.ico" />
+  <style is:global>
+    :root { --ink: #1c1c1c; --muted: #6b6b6b; --line: #e4e1dc; --bg: #f7f5f2; --card: #fff; --accent: #8a6d3b; --danger: #a33a2c; --ok: #2f6b3a; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Montserrat, system-ui, sans-serif; color: var(--ink); background: var(--bg); font-size: 16px; line-height: 1.5; }
+    h1, h2 { font-family: 'Playfair Display', Georgia, serif; font-weight: 500; margin: 0; }
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.35rem; }
+    button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: .55rem 1rem; }
+    button.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+    button.danger { color: var(--danger); }
+    button:disabled { opacity: .5; cursor: default; }
+    input[type=password], input[type=text] { font: inherit; padding: .6rem .8rem; border: 1px solid var(--line); border-radius: 6px; width: 100%; background: #fff; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 16px 80px; }
+    .login { max-width: 380px; margin: 12vh auto 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 28px; display: grid; gap: 14px; }
+    .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+    .help { color: var(--muted); margin: 0 0 20px; max-width: 70ch; }
+    .status { position: sticky; top: 0; z-index: 5; padding: .7rem 1rem; border-radius: 8px; margin-bottom: 16px; background: #fff; border: 1px solid var(--line); }
+    .status.ok { border-color: var(--ok); color: var(--ok); }
+    .status.err { border-color: var(--danger); color: var(--danger); }
+    .cat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin-bottom: 18px; }
+    .cat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .cat-head small { color: var(--muted); }
+    .drop { border: 2px dashed var(--line); border-radius: 8px; padding: 18px; text-align: center; color: var(--muted); margin-bottom: 14px; }
+    .drop.over { border-color: var(--accent); background: #faf6ee; }
+    .drop button { margin-top: 6px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .tile { position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #eee; }
+    .tile img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: #ddd; }
+    .tile .name { font-size: .75rem; padding: 4px 6px; background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tile .actions { display: flex; gap: 4px; padding: 0 6px 6px; background: #fff; }
+    .tile .actions button { flex: 1; font-size: .75rem; padding: .3rem .2rem; }
+    .badge { position: absolute; top: 6px; left: 6px; background: var(--accent); color: #fff; font-size: .7rem; padding: 2px 6px; border-radius: 4px; }
+    .tile.pending { opacity: .6; }
+    .empty { color: var(--muted); font-style: italic; grid-column: 1 / -1; margin: 0; }
+    .new-cat button { white-space: nowrap; }
+    .new-cat { display: flex; gap: 8px; max-width: 520px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <form class="login" id="login" hidden>
+    <h1>Bilder</h1>
+    <label>Passord<br /><input type="password" id="password" autocomplete="current-password" required /></label>
+    <button class="primary" type="submit">Logg inn</button>
+    <p id="login-error" class="empty" hidden></p>
+  </form>
+
+  <main class="wrap" id="app" hidden>
+    <div class="top">
+      <h1>Bilder på nettsiden</h1>
+      <button id="logout" type="button">Logg ut</button>
+    </div>
+    <p class="help">
+      Dra bilder inn i en kategori, eller trykk «Velg bilder». Bildene blir gjort mindre før de lastes opp, så det går fort.
+      Nettsiden oppdateres av seg selv etter hver endring, og endringen er synlig etter et par minutter.
+      Bildene vises i rekkefølge etter filnavn. Velg «Forside» på bildet som skal være øverst på siden.
+    </p>
+    <div class="status" id="status" hidden></div>
+    <div id="cats"></div>
+    <section class="cat">
+      <h2>Ny kategori</h2>
+      <p class="help">Lag en egen side for for eksempel bryllup eller konfirmasjon. Kategorien vises på nettsiden når den har minst ett bilde.</p>
+      <form class="new-cat" id="new-cat">
+        <input type="text" id="new-cat-name" maxlength="50" placeholder="Navn, for eksempel Bryllup" required />
+        <button type="submit">Legg til</button>
+      </form>
+    </section>
+  </main>
+
+  <script is:inline type="application/json" id="services" set:html={JSON.stringify(services)} />
+  <script>
+    import '../scripts/admin.ts';
+  </script>
+</body>
+</html>

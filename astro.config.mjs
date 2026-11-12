@@ -8,5 +8,5 @@ export default defineConfig({
   site: 'https://stefanborup.com',
   trailingSlash: 'never',
   build: { format: 'file' },
-  integrations: [sitemap()],
+  integrations: [sitemap({ filter: (page) => !page.includes('/admin') })],
 });

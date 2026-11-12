@@ -1,13 +1,13 @@
 import { getCollection, getEntry } from 'astro:content';
 import { existsSync, readFileSync } from 'node:fs';
-import { mergeGalleries, type SyncedData } from './dropbox/merge.ts';
+import { mergeGalleries, type SyncedData } from './gallery/merge.ts';
 
-/** Written by scripts/sync-dropbox.ts before the build. Missing when Dropbox is not configured. */
-export const DROPBOX_DATA_FILE = 'src/generated/dropbox-galleries.json';
+/** Written by scripts/sync-gallery.ts before the build. Missing when the Blob store is not configured. */
+export const GALLERY_DATA_FILE = 'src/generated/galleries.json';
 
-function readDropboxData(): SyncedData | null {
-  if (!existsSync(DROPBOX_DATA_FILE)) return null;
-  return JSON.parse(readFileSync(DROPBOX_DATA_FILE, 'utf8')) as SyncedData;
+function readSyncedData(): SyncedData | null {
+  if (!existsSync(GALLERY_DATA_FILE)) return null;
+  return JSON.parse(readFileSync(GALLERY_DATA_FILE, 'utf8')) as SyncedData;
 }
 
 /** Slugs that have their own top-level URL on the live site. */
@@ -19,7 +19,7 @@ export const galleryHref = (slug: string) =>
 
 export async function getGalleries() {
   const all = await getCollection('galleries');
-  return mergeGalleries(all.map((g) => g.data), readDropboxData());
+  return mergeGalleries(all.map((g) => g.data), readSyncedData());
 }
 
 export async function getSite() {

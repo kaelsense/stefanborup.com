@@ -1,16 +1,20 @@
-// Pure logic for the Dropbox gallery sync (no I/O, so it is easy to test).
+// Pure logic for the gallery sync (no I/O, so it is easy to test).
 //
-// Folder convention in the Dropbox app folder:
+// The images live in a Vercel Blob store under "galleri/<folder>/<file>" (uploaded through /admin).
+// The same rules worked for the earlier Dropbox folder, which is imported once (scripts/sync-gallery.ts).
+//
+// Folder convention:
 //   01 Portretter/         -> category "Portretter", order 1, slug "portretter"
 //   02 Produktbilder/      -> category "Produktbilder", order 2
 //   Arkitektur/            -> no number: sorted after the numbered ones, alphabetically
 //   _Utkast/               -> starts with "_": ignored
-//   <category>/cover.jpg   -> (or forside.jpg) the category's hero image, not shown in the grid
+//   <category>/cover.jpg   -> (or forside.jpg, or "forside--<name>") the category's hero image, not in the grid
 // Images are sorted by file name ("01 ...", "02 ..." or camera numbers both work).
 // The file name becomes the alt text, unless it looks like a camera name (IMG_1234).
 // Files directly in the root and files in subfolders starting with "_" are ignored.
 // Deeper subfolders inside a category are included in that category.
 
+/** A file or folder from the image source (shape of a Dropbox list_folder entry). */
 export type DropboxEntry = {
   '.tag': 'file' | 'folder' | 'deleted';
   name: string;
@@ -21,9 +25,9 @@ export type DropboxEntry = {
 };
 
 export type PlannedImage = {
-  /** Dropbox file id ("id:..."), ASCII, safe for the Dropbox-API-Arg header. */
+  /** Where to download the file: the blob pathname (or a Dropbox file id). */
   id: string;
-  /** Dropbox content hash: changes when the file content changes. */
+  /** Changes when the file content changes. */
   hash: string;
   name: string;
   alt: string;
@@ -42,6 +46,8 @@ export type PlannedGallery = {
 
 export const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'tif', 'tiff', 'avif'];
 const COVER_NAMES = ['cover', 'forside'];
+/** Prefix the admin page puts on the file chosen as cover: "forside--Kari.jpg". */
+export const COVER_PREFIX = 'forside--';
 /** Folders without a number prefix are sorted after numbered ones. */
 const UNNUMBERED_ORDER = 1000;
 
@@ -68,7 +74,7 @@ export function altFromFileName(name: string): string {
   return base;
 }
 
-const naturalCompare = (a: string, b: string) => a.localeCompare(b, 'nb', { numeric: true, sensitivity: 'base' });
+export const naturalCompare = (a: string, b: string) => a.localeCompare(b, 'nb', { numeric: true, sensitivity: 'base' });
 
 /**
  * Turns a recursive list_folder result into galleries.
@@ -109,10 +115,13 @@ export function planGalleries(entries: DropboxEntry[], root = ''): PlannedGaller
     const files = (byFolder.get(folder) ?? []).sort((a, b) => naturalCompare(a.name, b.name));
     const toImage = (f: DropboxEntry): PlannedImage => ({
       id: f.id!, hash: f.content_hash!, name: f.name,
-      alt: altFromFileName(f.name.split('/').pop()!),
+      alt: altFromFileName(f.name.split('/').pop()!.replace(COVER_PREFIX, '')),
       key: f.content_hash!.slice(0, 16),
     });
-    const isCover = (f: DropboxEntry) => COVER_NAMES.includes(baseName(f.name).toLowerCase());
+    const isCover = (f: DropboxEntry) => {
+      const base = baseName(f.name.split('/').pop()!).toLowerCase();
+      return COVER_NAMES.includes(base) || base.startsWith(COVER_PREFIX);
+    };
     const coverFile = files.find(isCover);
     const images = files.filter((f) => f !== coverFile).map(toImage);
     galleries.push({ folder, slug, name, order: order ?? UNNUMBERED_ORDER, cover: coverFile ? toImage(coverFile) : null, images });
@@ -120,8 +129,50 @@ export function planGalleries(entries: DropboxEntry[], root = ''): PlannedGaller
   return galleries.sort((a, b) => a.order - b.order || naturalCompare(a.folder, b.folder));
 }
 
+/** Where the generated WebP files are published. */
+export const IMAGE_DIR = '/images/galleri';
+
 /** Public paths of the two sizes generated for every image. */
-export const imagePaths = (key: string, dir = '/images/dropbox') => ({
+export const imagePaths = (key: string, dir = IMAGE_DIR) => ({
   thumb: `${dir}/${key}-900.webp`,
   full: `${dir}/${key}-2560.webp`,
 });
+
+/** Blob pathname prefix that holds the category folders. */
+export const BLOB_ROOT = 'galleri';
+
+export type BlobListItem = { pathname: string; etag: string; size?: number };
+
+/** SHA-256 hex of a string (Web Crypto, works in Node, Vercel Functions and browsers). */
+export async function sha256Hex(s: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Turns a Blob store listing into source entries for planGalleries(entries, BLOB_ROOT).
+ * The content hash is derived from pathname + ETag, so it changes when a file is replaced.
+ */
+export async function blobEntries(blobs: BlobListItem[]): Promise<DropboxEntry[]> {
+  return Promise.all(blobs.map(async (b) => ({
+    '.tag': 'file' as const,
+    name: b.pathname.split('/').pop()!,
+    path_display: `/${b.pathname}`,
+    id: b.pathname,
+    content_hash: await sha256Hex(`${b.pathname}|${b.etag}`),
+    size: b.size,
+  })));
+}
+
+/** True for a folder name the admin page may create: no slashes, not hidden, not too long. */
+export const isValidFolderName = (s: string) =>
+  s.trim() === s && s.length > 0 && s.length <= 60 && !/[\\/\u0000-\u001f]/.test(s) && !s.startsWith('_') && !s.startsWith('.');
+
+/** True for a blob pathname inside a category folder: "galleri/<folder>/<file>" with an image extension. */
+export function isGalleryImagePath(p: string): boolean {
+  const parts = p.split('/');
+  if (parts.length !== 3 || parts[0] !== BLOB_ROOT) return false;
+  const [, folder, file] = parts;
+  return isValidFolderName(folder) && file.length > 0 && file.length <= 150 && !file.startsWith('.')
+    && !/[\u0000-\u001f\\]/.test(file) && IMAGE_EXTENSIONS.includes(extension(file));
+}
