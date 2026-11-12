@@ -1,4 +1,14 @@
 import { getCollection, getEntry } from 'astro:content';
+import { existsSync, readFileSync } from 'node:fs';
+import { mergeGalleries, type SyncedData } from './gallery/merge.ts';
+
+/** Written by scripts/sync-gallery.ts before the build. Missing when the Blob store is not configured. */
+export const GALLERY_DATA_FILE = 'src/generated/galleries.json';
+
+function readSyncedData(): SyncedData | null {
+  if (!existsSync(GALLERY_DATA_FILE)) return null;
+  return JSON.parse(readFileSync(GALLERY_DATA_FILE, 'utf8')) as SyncedData;
+}
 
 /** Slugs that have their own top-level URL on the live site. */
 export const RESERVED_GALLERY_SLUGS = ['arkitektur', 'produktbilder', 'portretter'];
@@ -9,7 +19,7 @@ export const galleryHref = (slug: string) =>
 
 export async function getGalleries() {
   const all = await getCollection('galleries');
-  return all.map((g) => g.data).sort((a, b) => a.order - b.order);
+  return mergeGalleries(all.map((g) => g.data), readSyncedData());
 }
 
 export async function getSite() {
