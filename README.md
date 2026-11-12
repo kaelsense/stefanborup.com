@@ -46,7 +46,7 @@ npm test          # unit tests: form validation, payload, calendar, api/lead.ts 
 - The URLs are the same as on the live site, with no trailing slash: `/om-stefan`, `/portefolje`, `/portretter`, `/produktbilder`, `/arkitektur` and `/bestilling`.
 - `astro.config.mjs` sets `trailingSlash: 'never'` and `build.format: 'file'`, so pages are emitted as `dist/om-stefan.html`. Vercel serves these without `.html` (`cleanUrls`).
 - Vercel redirects the trailing-slash version (for example `/om-stefan/`) to the version without it with a 308 (`trailingSlash: false`).
-- `@astrojs/sitemap` generates `sitemap-index.xml` for `https://stefanborup.com`, and `public/robots.txt` points to it.
+- `@astrojs/sitemap` generates the sitemap for `https://stefanborup.com`; a small hook in `astro.config.mjs` also publishes it as `/sitemap.xml`, which `public/robots.txt` points to.
 
 ## Form backend: Resend via `api/lead.ts`
 
@@ -147,7 +147,7 @@ The setup was checked with `vercel build` locally. The output had the 8 static p
 5. In Vercel → Domains, add `stefanborup.com` and `www.stefanborup.com`, with `www` redirecting to apex.
 6. Launch: change the DNS to Vercel's records (apex `A` / `www` `CNAME`, as Vercel shows them). The old site is on Lovable behind Cloudflare; turn it off only after the new one is verified.
 7. Check that SSL is active, that `http://` redirects to `https://`, and that `www` redirects to apex.
-8. Submit `https://stefanborup.com/sitemap-index.xml` in Google Search Console.
+8. Submit `https://stefanborup.com/sitemap.xml` in Google Search Console.
 
 ## Editing content
 
