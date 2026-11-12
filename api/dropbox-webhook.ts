@@ -14,7 +14,7 @@
 // Self-contained on purpose (no local imports), so Vercel bundles it as is.
 
 export type Env = { DROPBOX_APP_SECRET?: string; VERCEL_DEPLOY_HOOK_URL?: string };
-type Deps = { env: Env; fetch: typeof fetch; log?: (msg: string, extra?: unknown) => void };
+type Deps = { env: Env; fetch: typeof fetch; log?: (msg: string, extra?: unknown) => void; info?: (msg: string) => void };
 
 export const MAX_BODY_BYTES = 100_000;
 
@@ -54,7 +54,10 @@ export async function handleDropboxWebhook(request: Request, deps: Deps): Promis
   const body = await request.text();
   if (body.length > MAX_BODY_BYTES) return text(413, 'payload too large');
   const given = (request.headers.get('x-dropbox-signature') ?? '').toLowerCase();
-  if (!given || !safeEqual(given, await signature(secret, body))) return text(403, 'invalid signature');
+  if (!given || !safeEqual(given, await signature(secret, body))) {
+    log(`[dropbox-webhook] rejected: ${given ? 'signature does not match DROPBOX_APP_SECRET' : 'no X-Dropbox-Signature header'}`);
+    return text(403, 'invalid signature');
+  }
 
   try {
     const res = await deps.fetch(hook, { method: 'POST' });
@@ -66,6 +69,7 @@ export async function handleDropboxWebhook(request: Request, deps: Deps): Promis
     log('[dropbox-webhook] deploy hook request failed', err);
     return text(502, 'deploy hook failed');
   }
+  (deps.info ?? console.log)('[dropbox-webhook] change notification received, deploy hook triggered');
   return text(200, 'ok');
 }
 
