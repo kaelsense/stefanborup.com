@@ -25,7 +25,7 @@ import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { list, get, put } from '@vercel/blob';
-import { planGalleries, imagePaths, blobEntries, BLOB_ROOT, IMAGE_DIR, type PlannedImage } from '../src/lib/gallery/plan.ts';
+import { planGalleries, imagePaths, blobEntries, BLOB_ROOT, IMAGE_DIR, SETTINGS_PATH, type PlannedImage, type GallerySettings } from '../src/lib/gallery/plan.ts';
 import { importFromDropbox } from './dropbox-import.ts';
 
 const OUT_DIR = join('public', IMAGE_DIR);
@@ -126,7 +126,10 @@ async function main() {
   let blobs = await listAll();
   if (await maybeImportDropbox(blobs)) blobs = await listAll();
 
-  const galleries = planGalleries(await blobEntries(blobs.filter((b) => b.pathname !== IMPORT_MARKER)), BLOB_ROOT);
+  const settings: GallerySettings = blobs.some((b) => b.pathname === SETTINGS_PATH)
+    ? JSON.parse((await download(SETTINGS_PATH)).toString('utf8'))
+    : {};
+  const galleries = planGalleries(await blobEntries(blobs.filter((b) => b.pathname !== IMPORT_MARKER && b.pathname !== SETTINGS_PATH)), BLOB_ROOT, settings);
   log(`found ${galleries.length} categories:`, galleries.map((g) => `${g.name} (${g.images.length})`).join(', ') || '-');
 
   rmSync(OUT_DIR, { recursive: true, force: true });

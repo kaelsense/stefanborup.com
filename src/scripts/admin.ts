@@ -1,6 +1,7 @@
 // Browser code for /admin (see src/pages/admin.astro and api/admin.ts).
 import { upload } from '@vercel/blob/client';
-import { parseFolderName, slugify, naturalCompare, sha256Hex, isValidFolderName, COVER_PREFIX, IMAGE_DIR } from '../lib/gallery/plan.ts';
+import Sortable from 'sortablejs';
+import { parseFolderName, slugify, naturalCompare, sha256Hex, isValidFolderName, sortByOrder, COVER_PREFIX, IMAGE_DIR, type GallerySettings } from '../lib/gallery/plan.ts';
 
 type Service = { slug: string; name: string };
 type Img = { pathname: string; name: string; etag: string; size: number };
@@ -16,6 +17,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 const services: Service[] = JSON.parse($('services').textContent || '[]');
 const extraFolders = new Set<string>(); // new categories without images yet
 let folders: Folder[] = [];
+let settings: GallerySettings = {};
 let published = new Set<string>();
 
 // ---------- helpers ----------
@@ -54,9 +56,15 @@ function categories(): Category[] {
   for (const folder of [...new Set(rest)].sort(naturalCompare)) {
     cats.push({ folder, title: parseFolderName(folder).name, service: false, images: folders.find((f) => f.folder === folder)?.images ?? [] });
   }
-  const isCover = (i: Img) => i.name.toLowerCase().startsWith(COVER_PREFIX);
-  for (const c of cats) c.images.sort((a, b) => Number(isCover(b)) - Number(isCover(a)) || naturalCompare(a.name, b.name));
+  for (const c of cats) c.images = sortByOrder(c.images, settings[c.folder]?.order);
   return cats;
+}
+
+/** The starred (hero) image of a category: chosen with the star, or an older "forside--" file. */
+function starred(cat: Category): string | null {
+  const star = settings[cat.folder]?.star;
+  if (star && cat.images.some((i) => i.name === star)) return star;
+  return cat.images.find((i) => i.name.startsWith(COVER_PREFIX))?.name ?? null;
 }
 
 async function thumbUrl(img: Img): Promise<string> {
@@ -146,62 +154,93 @@ async function render() {
 
     const grid = document.createElement('div');
     grid.className = 'grid';
-    grid.dataset.folder = cat.folder;
-    for (const img of cat.images) grid.append(await tile(img));
+    const star = starred(cat);
+    for (const img of cat.images) grid.append(await tile(cat, img, img.name === star));
     if (!cat.images.length) {
       const p = document.createElement('p');
       p.className = 'empty';
       p.textContent = 'Ingen bilder her ennå.';
       grid.append(p);
+    } else {
+      Sortable.create(grid, {
+        animation: 150,
+        delay: 200,
+        delayOnTouchOnly: true, // on phones: press and hold to drag, so the page still scrolls
+        filter: 'button',
+        preventOnFilter: false,
+        ghostClass: 'ghost',
+        onEnd: (e) => {
+          if (e.oldIndex === e.newIndex) return;
+          const names = [...grid.querySelectorAll<HTMLElement>('.tile')].map((t) => t.dataset.name!);
+          saveSetting(cat.folder, { order: names });
+        },
+      });
     }
     sec.append(head, drop, grid);
     root.append(sec);
   }
 }
 
-async function tile(img: Img): Promise<HTMLElement> {
-  const isCover = img.name.toLowerCase().startsWith(COVER_PREFIX);
+const STAR_ON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+
+async function tile(cat: Category, img: Img, isStar: boolean): Promise<HTMLElement> {
+  const label = img.name.replace(COVER_PREFIX, '');
   const el = document.createElement('div');
-  el.className = 'tile';
+  el.className = `tile${isStar ? ' starred' : ''}`;
+  el.dataset.name = img.name;
+  el.title = label;
   const pic = document.createElement('img');
   pic.loading = 'lazy';
-  pic.alt = '';
+  pic.alt = label;
+  pic.draggable = false;
   pic.src = await thumbUrl(img);
-  const name = document.createElement('div');
-  name.className = 'name';
-  name.textContent = isCover ? img.name.slice(COVER_PREFIX.length) : img.name;
-  name.title = name.textContent;
-  const actions = document.createElement('div');
-  actions.className = 'actions';
-  if (!isCover) {
-    const cover = document.createElement('button');
-    cover.textContent = 'Forside';
-    cover.title = 'Bruk som stort bilde øverst på siden';
-    cover.onclick = () => runChange(() => call('cover', { pathname: img.pathname }));
-    actions.append(cover);
-  }
+
+  const starBtn = document.createElement('button');
+  starBtn.type = 'button';
+  starBtn.className = 'star';
+  starBtn.innerHTML = STAR_ON;
+  starBtn.setAttribute('aria-pressed', String(isStar));
+  starBtn.title = isStar ? 'Fremhevet bilde (øverst på siden). Trykk for å fjerne.' : 'Fremhev dette bildet (vises øverst på siden)';
+  starBtn.setAttribute('aria-label', starBtn.title);
+  starBtn.onclick = () => saveSetting(cat.folder, { star: isStar ? null : img.name });
+
   const del = document.createElement('button');
-  del.className = 'danger';
-  del.textContent = 'Slett';
+  del.type = 'button';
+  del.className = 'del';
+  del.textContent = '×';
+  del.title = 'Slett bildet';
+  del.setAttribute('aria-label', `Slett ${label}`);
   del.onclick = async () => {
-    if (!confirm(`Slette «${name.textContent}» fra nettsiden?`)) return;
+    if (!confirm(`Slette «${label}» fra nettsiden?`)) return;
     await runChange(() => call('delete', { pathnames: [img.pathname] }));
   };
-  actions.append(del);
-  if (isCover) {
-    const badge = document.createElement('span');
-    badge.className = 'badge';
-    badge.textContent = 'Forsidebilde';
-    el.append(badge);
-  }
-  el.append(pic, name, actions);
+  el.append(pic, starBtn, del);
   return el;
+}
+
+/** Saves order or star for a category, updates the page right away and publishes shortly after. */
+async function saveSetting(folder: string, change: { order?: string[]; star?: string | null }) {
+  settings = { ...settings, [folder]: { ...settings[folder], ...change } };
+  await render();
+  try {
+    setStatus('Lagrer …');
+    const res = 'order' in change
+      ? await call<{ settings: GallerySettings }>('order', { folder, names: change.order })
+      : await call<{ settings: GallerySettings }>('star', { folder, name: change.star });
+    settings = res.settings;
+    schedulePublish();
+  } catch (e) {
+    setStatus(`Noe gikk galt: ${(e as Error).message}`, 'err');
+    await refresh().catch(() => {});
+  }
 }
 
 // ---------- actions ----------
 
 async function refresh() {
-  folders = (await call<{ folders: Folder[] }>('list')).folders;
+  const data = await call<{ folders: Folder[]; settings: GallerySettings }>('list');
+  folders = data.folders;
+  settings = data.settings ?? {};
   await render();
 }
 
