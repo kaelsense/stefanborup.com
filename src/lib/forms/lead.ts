@@ -28,6 +28,7 @@ export const PHOTO_PACKAGES = [
   { value: 'rekkehus', label: 'Rekkehus/tomannsbolig' },
   { value: 'enebolig', label: 'Enebolig' },
   { value: 'fasadebilder', label: 'Fasadebilder' },
+  { value: 'andre_oppdrag', label: 'Andre oppdrag' },
 ];
 
 export const ADDITIONAL_SERVICES = [

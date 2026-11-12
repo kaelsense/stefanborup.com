@@ -21,6 +21,7 @@ export const PHOTO_PACKAGE_LABELS: Record<string, string> = {
   rekkehus: 'Rekkehus/tomannsbolig',
   enebolig: 'Enebolig',
   fasadebilder: 'Fasadebilder',
+  andre_oppdrag: 'Andre oppdrag',
 };
 
 export const SERVICE_LABELS: Record<string, string> = {
