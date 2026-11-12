@@ -8,6 +8,9 @@ import { PHOTO_PACKAGES, ADDITIONAL_SERVICES } from '../lib/forms/lead';
 import { LABEL, INPUT, TEXTAREA, CHECKBOX, SELECT_TRIGGER, buttonClass } from '../lib/ui';
 interface Props { title: string; text: string }
 const { title, text } = Astro.props;
+// Cloudflare Turnstile site key (public). Set PUBLIC_TURNSTILE_SITE_KEY in Vercel;
+// without it the widget is left out and the server skips the check if its secret is also unset.
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY as string | undefined;
 const now = new Date();
 const calendarHtml = renderCalendar(new Date(now.getFullYear(), now.getMonth(), 1), null, now);
 const input = `${INPUT} bg-card border-border`;
@@ -96,12 +99,14 @@ const HIDDEN_CHECK = 'position: absolute; pointer-events: none; opacity: 0; marg
           <label class={`${LABEL} text-sm mb-1.5 block`} for="message">Spesielle ønsker eller kommentarer</label>
           <textarea class={`${TEXTAREA} bg-card border-border resize-none`} id="message" placeholder="Beskriv eventuelle spesielle ønsker for oppdraget" rows="3"></textarea>
         </div>
+        {turnstileSiteKey && <div class="cf-turnstile" data-turnstile data-sitekey={turnstileSiteKey} data-theme="dark" data-size="flexible" data-action="lead" />}
         <button type="submit" class={buttonClass('default', 'w-full uppercase tracking-wider')}>Send forespørsel</button>
         <div aria-hidden="true" style="position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden;"><label for="website">Nettside</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off" value="" data-honeypot /></div>
       </form>
     </div>
   </div>
 </section>
+{turnstileSiteKey && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
 <script>
   import { initContactForm } from '../scripts/contact-form.ts';
   initContactForm();

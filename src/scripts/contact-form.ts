@@ -10,6 +10,9 @@ const TEXT_FIELDS = ['firstName', 'lastName', 'email', 'phone', 'sellerName', 'a
 const ITEM = 'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-accent focus:text-accent-foreground';
 const CONTENT = 'relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1';
 
+type Turnstile = { getResponse(el?: Element): string | undefined; reset(el?: Element): void };
+const turnstile = () => (window as unknown as { turnstile?: Turnstile }).turnstile;
+
 export function initContactForm() {
   const root = document.querySelector<HTMLElement>('[data-lead]');
   if (!root) return;
@@ -141,14 +144,24 @@ export function initContactForm() {
     TEXT_FIELDS.forEach((id) => ((values as Record<string, unknown>)[id] = el(id).value));
     const result = validateLead(values);
     if (!result.ok) { showErrors(result.errors); return; }
+    // Cloudflare Turnstile: only present when a site key was set at build time.
+    const widget = form.querySelector<HTMLElement>('[data-turnstile]');
+    const turnstileToken = widget ? turnstile()?.getResponse(widget) ?? '' : '';
+    if (widget && !turnstileToken) {
+      toast({ title: 'Vent litt', description: 'Sikkerhetssjekken er ikke ferdig ennå. Prøv igjen om et øyeblikk.', variant: 'destructive' });
+      return;
+    }
     submitBtn.disabled = true;
     const label = submitBtn.textContent;
     submitBtn.textContent = 'Sender...';
     try {
       const honeypot = form.querySelector<HTMLInputElement>('[data-honeypot]')?.value ?? '';
-      const res = await submitLead(buildLeadPayload(result.data, selected, timeInput.value), honeypot);
+      const res = await submitLead(buildLeadPayload(result.data, selected, timeInput.value), honeypot, fetch, turnstileToken);
       if (!res.ok) {
-        toast({ title: 'Noe gikk galt', description: 'Kunne ikke sende forespørselen. Vennligst prøv igjen.', variant: 'destructive' });
+        const description = res.reason === 'captcha_failed'
+          ? 'Sikkerhetssjekken feilet. Vennligst prøv igjen.'
+          : 'Kunne ikke sende forespørselen. Vennligst prøv igjen.';
+        toast({ title: 'Noe gikk galt', description, variant: 'destructive' });
         return;
       }
       toast({ title: 'Takk for din henvendelse!', description: 'Vi tar kontakt med deg så snart som mulig.' });
@@ -157,6 +170,8 @@ export function initContactForm() {
       console.error('Error:', err);
       toast({ title: 'Noe gikk galt', description: 'Kunne ikke sende forespørselen. Vennligst prøv igjen.', variant: 'destructive' });
     } finally {
+      // Turnstile tokens are single use, so get a fresh one for the next attempt.
+      if (widget) turnstile()?.reset(widget);
       submitBtn.disabled = false;
       submitBtn.textContent = label;
     }

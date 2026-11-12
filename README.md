@@ -76,10 +76,20 @@ The function always answers with JSON:
 | 413 | `{ ok: false, error: 'payload_too_large' }` | Body over 20 KB |
 | 415 | `{ ok: false, error: 'unsupported_media_type' }` | Not JSON |
 | 422 | `{ ok: false, error: 'validation_failed', fields }` | A field failed validation |
+| 403 | `{ ok: false, error: 'captcha_failed' }` | Turnstile is on and the token is missing or rejected by Cloudflare |
 | 500 | `{ ok: false, error: 'not_configured' }` | An env var is missing |
 | 502 | `{ ok: false, error: 'email_failed' }` | Resend refused the email or could not be reached |
 
-There is no rate limiting beyond the honeypot. If spam becomes a problem, add Vercel Firewall rate limiting on `/api/lead`, or Cloudflare Turnstile.
+Spam protection: the honeypot plus Cloudflare Turnstile (below). For more, add Vercel Firewall rate limiting on `/api/lead`.
+
+### Cloudflare Turnstile
+
+The booking form shows a Turnstile widget (dark theme, full width) above the submit button. The browser sends its token as `turnstile_token`, and `api/lead.ts` checks it with Cloudflare's `siteverify` before any email is sent. Tokens are single use, so the widget resets after every attempt.
+
+- `PUBLIC_TURNSTILE_SITE_KEY` is read **at build time**. Without it the widget and script are left out of the page. After setting or changing it, redeploy.
+- `TURNSTILE_SECRET_KEY` turns on the server check. Without it the check is skipped and a warning is logged.
+- Set both, or neither. A secret without a site key rejects every submission with 403.
+- In Cloudflare, the widget's hostnames must include `stefanborup.com` (and the `*.vercel.app` preview host if previews should work).
 
 ### Environment variables
 
@@ -90,8 +100,10 @@ Set these in Vercel → Project → Settings → Environment Variables, for Prod
 | `RESEND_API_KEY` | `re_…` | Resend → API Keys. Create a key with "Sending access" only, ideally limited to the verified domain. |
 | `LEAD_TO_EMAIL` | `navn@domene.no` | Who receives the leads. To send to several people, separate the addresses with commas. Kay decides the address. |
 | `LEAD_FROM_EMAIL` | `Stefan Borup nettside <skjema@stefanborup.com>` | Must be on a domain verified in Resend. |
+| `PUBLIC_TURNSTILE_SITE_KEY` | `0x4AAAAAAA…` | Cloudflare → Turnstile → widget → Site Key. Public, used at build time. |
+| `TURNSTILE_SECRET_KEY` | `0x4AAAAAAA…` | Cloudflare → Turnstile → widget → Secret Key. Server only. |
 
-Without all three, the function answers 500 `not_configured` and the visitor sees "Noe gikk galt". Nothing is sent.
+Without the first three, the function answers 500 `not_configured` and the visitor sees "Noe gikk galt". Nothing is sent.
 
 ### Resend domain verification
 

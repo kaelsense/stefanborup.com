@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { handleLead, validateLeadPayload, formatLeadEmail, PHOTO_PACKAGE_LABELS, SERVICE_LABELS, MAX_BODY_BYTES, type Env } from '../api/lead.ts';
+import { handleLead, validateLeadPayload, formatLeadEmail, PHOTO_PACKAGE_LABELS, SERVICE_LABELS, MAX_BODY_BYTES, TURNSTILE_VERIFY_URL, type Env } from '../api/lead.ts';
 import { buildLeadPayload, emptyLeadForm, PHOTO_PACKAGES, ADDITIONAL_SERVICES } from '../src/lib/forms/lead.ts';
 import { submitLead } from '../src/lib/forms/backend.ts';
 
@@ -164,4 +164,73 @@ test('end to end: browser seam -> handler -> mocked Resend', async () => {
     handleLead(new Request(`https://stefanborup.com${url}`, init), { env: ENV, fetch: resend.fn, log: silent })) as unknown as typeof fetch;
   assert.deepEqual(await submitLead(fullPayload(), '', viaHandler), { ok: true });
   assert.equal(resend.calls.length, 1);
+});
+
+// ---- Cloudflare Turnstile ---------------------------------------------
+const TS_ENV: Env = { ...ENV, TURNSTILE_SECRET_KEY: '0x4AAA-secret' };
+/** Mocks both Cloudflare siteverify and Resend; `verdict` is what siteverify answers. */
+const mockBoth = (verdict: unknown | Error) => {
+  const calls: Call[] = [];
+  const fn = (async (url: string, init: RequestInit) => {
+    calls.push({ url, init });
+    if (url === TURNSTILE_VERIFY_URL) {
+      if (verdict instanceof Error) throw verdict;
+      return new Response(JSON.stringify(verdict), { status: 200 });
+    }
+    return new Response(JSON.stringify({ id: 'email_1' }), { status: 200 });
+  }) as unknown as typeof fetch;
+  return { fn, calls };
+};
+
+test('turnstile: valid token is verified with secret, token and visitor IP, then the email is sent', async () => {
+  const m = mockBoth({ success: true });
+  const res = await handleLead(req({ ...fullPayload(), turnstile_token: 'tok-1' }, { 'x-forwarded-for': '203.0.113.7, 10.0.0.1' }), { env: TS_ENV, fetch: m.fn, log: silent });
+  assert.equal(res.status, 200);
+  assert.equal(m.calls.length, 2);
+  assert.equal(m.calls[0].url, TURNSTILE_VERIFY_URL);
+  const sent = m.calls[0].init.body as URLSearchParams;
+  assert.equal(sent.get('secret'), '0x4AAA-secret');
+  assert.equal(sent.get('response'), 'tok-1');
+  assert.equal(sent.get('remoteip'), '203.0.113.7');
+  assert.equal(m.calls[1].url, 'https://api.resend.com/emails');
+});
+
+test('turnstile: missing, rejected or unverifiable token -> 403 captcha_failed and no email', async () => {
+  const cases: [unknown, unknown][] = [
+    [undefined, { success: true }],
+    ['', { success: true }],
+    [42, { success: true }],
+    ['tok', { success: false, 'error-codes': ['invalid-input-response'] }],
+    ['tok', new Error('network')],
+  ];
+  for (const [token, verdict] of cases) {
+    const m = mockBoth(verdict);
+    const res = await handleLead(req({ ...fullPayload(), turnstile_token: token }), { env: TS_ENV, fetch: m.fn, log: silent });
+    assert.equal(res.status, 403);
+    assert.equal((await res.json()).error, 'captcha_failed');
+    assert.ok(m.calls.every((c) => c.url !== 'https://api.resend.com/emails'));
+  }
+});
+
+test('turnstile: without TURNSTILE_SECRET_KEY the check is skipped (and logged)', async () => {
+  const m = mockFetch();
+  const logs: string[] = [];
+  const res = await handleLead(req(fullPayload()), { env: ENV, fetch: m.fn, log: (msg) => logs.push(msg) });
+  assert.equal(res.status, 200);
+  assert.equal(m.calls.length, 1);
+  assert.ok(logs.some((l) => l.includes('TURNSTILE_SECRET_KEY')));
+});
+
+test('turnstile: honeypot still short-circuits before Cloudflare is asked', async () => {
+  const m = mockBoth({ success: true });
+  const res = await handleLead(req({ ...fullPayload(), website: 'spam', turnstile_token: 'tok' }), { env: TS_ENV, fetch: m.fn, log: silent });
+  assert.equal(res.status, 200);
+  assert.equal(m.calls.length, 0);
+});
+
+test('browser seam: sends the Turnstile token as turnstile_token', async () => {
+  let body: Record<string, unknown> = {};
+  const capture = (async (_url: string, init: RequestInit) => { body = JSON.parse(String(init.body)); return new Response('{"ok":true}', { status: 200 }); }) as unknown as typeof fetch;
+  await submitLead(fullPayload(), '', capture, 'tok-xyz');
+  assert.equal(body.turnstile_token, 'tok-xyz');
 });
