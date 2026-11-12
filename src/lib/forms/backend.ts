@@ -10,12 +10,15 @@ export const LEAD_ENDPOINT = '/api/lead';
 
 export type SubmitResult = { ok: boolean; reason?: string };
 
-/** `website` is the hidden honeypot field; real visitors leave it empty. */
-export async function submitLead(payload: LeadPayload, honeypot = '', fetchImpl: typeof fetch = fetch): Promise<SubmitResult> {
+/**
+ * `website` is the hidden honeypot field; real visitors leave it empty.
+ * `turnstileToken` comes from the Cloudflare Turnstile widget and is checked by the server.
+ */
+export async function submitLead(payload: LeadPayload, honeypot = '', fetchImpl: typeof fetch = fetch, turnstileToken = ''): Promise<SubmitResult> {
   const res = await fetchImpl(LEAD_ENDPOINT, {
     method: 'POST',
     headers: { 'content-type': 'application/json', accept: 'application/json' },
-    body: JSON.stringify({ ...payload, website: honeypot }),
+    body: JSON.stringify({ ...payload, website: honeypot, turnstile_token: turnstileToken }),
   });
   let body: { ok?: boolean; error?: string } = {};
   try { body = await res.json(); } catch { /* non-JSON answer counts as failure */ }

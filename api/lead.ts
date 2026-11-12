@@ -8,6 +8,9 @@
 //   RESEND_API_KEY   Resend API key (re_...)
 //   LEAD_TO_EMAIL    Who receives leads; several addresses may be comma-separated
 //   LEAD_FROM_EMAIL  Sender on a domain verified in Resend, e.g. "Nettside <...>"
+//   TURNSTILE_SECRET_KEY  Cloudflare Turnstile secret key. When set, every lead
+//                    must carry a valid Turnstile token (field `turnstile_token`).
+//                    When missing, the check is skipped and a warning is logged.
 //
 // Self-contained on purpose (no local imports), so Vercel bundles it as is.
 
@@ -29,6 +32,10 @@ export const SERVICE_LABELS: Record<string, string> = {
 
 /** Hidden field in the form. People never fill it; simple bots do. */
 export const HONEYPOT_FIELD = 'website';
+
+/** Field carrying the Cloudflare Turnstile token from the widget. */
+export const TURNSTILE_FIELD = 'turnstile_token';
+export const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
 const EMAIL = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9-]*\.)+[A-Z]{2,}$/i;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -195,11 +202,31 @@ export function formatLeadEmail(lead: Lead): { subject: string; text: string; ht
   return { subject, text, html };
 }
 
-export type Env = { RESEND_API_KEY?: string; LEAD_TO_EMAIL?: string; LEAD_FROM_EMAIL?: string };
+export type Env = { RESEND_API_KEY?: string; LEAD_TO_EMAIL?: string; LEAD_FROM_EMAIL?: string; TURNSTILE_SECRET_KEY?: string };
 type Deps = { env: Env; fetch: typeof fetch; log?: (msg: string, extra?: unknown) => void };
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
+
+/** Visitor IP as Vercel reports it; passed to Turnstile as an extra signal. */
+const clientIp = (request: Request): string | null =>
+  request.headers.get('x-real-ip') ?? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+
+/**
+ * Asks Cloudflare whether the Turnstile token is valid. Tokens are single use
+ * and expire after 5 minutes. Any network or parse error counts as "not valid".
+ */
+export async function verifyTurnstile(token: string, secret: string, ip: string | null, fetchImpl: typeof fetch): Promise<{ ok: boolean; codes: string[] }> {
+  const form = new URLSearchParams({ secret, response: token });
+  if (ip) form.set('remoteip', ip);
+  try {
+    const res = await fetchImpl(TURNSTILE_VERIFY_URL, { method: 'POST', body: form });
+    const data = (await res.json()) as { success?: boolean; 'error-codes'?: string[] };
+    return { ok: data.success === true, codes: data['error-codes'] ?? [] };
+  } catch (err) {
+    return { ok: false, codes: ['request_failed', String(err)] };
+  }
+}
 
 export async function handleLead(request: Request, deps: Deps): Promise<Response> {
   const log = deps.log ?? ((m: string, e?: unknown) => console.error(m, e ?? ''));
@@ -221,7 +248,19 @@ export async function handleLead(request: Request, deps: Deps): Promise<Response
   const result = validateLeadPayload(body);
   if ('errors' in result) return json(422, { ok: false, error: 'validation_failed', fields: result.errors });
 
-  const { RESEND_API_KEY, LEAD_TO_EMAIL, LEAD_FROM_EMAIL } = deps.env;
+  const { RESEND_API_KEY, LEAD_TO_EMAIL, LEAD_FROM_EMAIL, TURNSTILE_SECRET_KEY } = deps.env;
+  if (TURNSTILE_SECRET_KEY) {
+    const token = (body as Record<string, unknown>)[TURNSTILE_FIELD];
+    if (typeof token !== 'string' || token.length === 0 || token.length > 2048) return json(403, { ok: false, error: 'captcha_failed' });
+    const check = await verifyTurnstile(token, TURNSTILE_SECRET_KEY, clientIp(request), deps.fetch);
+    if (!check.ok) {
+      log('[lead] Turnstile rejected the token', check.codes);
+      return json(403, { ok: false, error: 'captcha_failed' });
+    }
+  } else {
+    log('[lead] TURNSTILE_SECRET_KEY not set, skipping the Turnstile check');
+  }
+
   const to = (LEAD_TO_EMAIL ?? '').split(',').map((s) => s.trim()).filter(Boolean);
   if (!RESEND_API_KEY || !LEAD_FROM_EMAIL || !to.length) {
     log('[lead] Missing RESEND_API_KEY, LEAD_TO_EMAIL or LEAD_FROM_EMAIL');
