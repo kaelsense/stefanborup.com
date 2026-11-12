@@ -140,9 +140,9 @@ async function render() {
     const pick = document.createElement('button');
     pick.type = 'button';
     pick.className = 'primary';
-    pick.textContent = 'Velg bilder';
+    pick.textContent = 'Last opp nye bilder';
     pick.onclick = () => input.click();
-    drop.append('Dra bildene hit', document.createElement('br'), pick, input);
+    drop.append('Dra nye bilder inn hit', document.createElement('br'), pick, input);
     drop.ondragover = (e) => { e.preventDefault(); drop.classList.add('over'); };
     drop.ondragleave = () => drop.classList.remove('over');
     drop.ondrop = (e) => {
@@ -176,7 +176,7 @@ async function render() {
         },
       });
     }
-    sec.append(head, drop, grid);
+    sec.append(head, grid, drop);
     root.append(sec);
   }
 }

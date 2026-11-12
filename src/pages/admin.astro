@@ -45,7 +45,8 @@ const services = (await getCollection('galleries'))
     .cat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin-bottom: 18px; }
     .cat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
     .cat-head small { color: var(--muted); }
-    .drop { border: 2px dashed var(--line); border-radius: 8px; padding: 18px; text-align: center; color: var(--muted); margin-bottom: 14px; }
+    .drop { border: 2px dashed var(--line); border-radius: 8px; padding: 18px; text-align: center; color: var(--muted); }
+    .grid { margin-bottom: 14px; }
     .drop.over { border-color: var(--accent); background: #faf6ee; }
     .drop button { margin-top: 6px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
@@ -82,7 +83,7 @@ const services = (await getCollection('galleries'))
       <button id="logout" type="button">Logg ut</button>
     </div>
     <p class="help">
-      Dra bilder inn i en kategori, eller trykk «Velg bilder». Bildene blir gjort mindre før de lastes opp, så det går fort.
+      Dra nye bilder inn i en kategori, eller trykk «Last opp nye bilder». Bildene blir gjort mindre før de lastes opp, så det går fort.
       Nettsiden oppdateres av seg selv etter hver endring, og endringen er synlig etter et par minutter.
       Dra bildene for å endre rekkefølgen (på mobil: hold fingeren på bildet litt før du drar).
       Trykk på stjernen for å fremheve bildet som vises stort øverst på siden.
