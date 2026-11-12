@@ -57,7 +57,7 @@
   - Favicon: `/favicon.png`.
   - Alt er lastet ned og ligger lokalt under `/images`.
 - **Stort bilde:** `1772694029006.jpg` (Vikingbad, arkitektur) er 4,0 MB. Det er beholdt uendret for identisk utseende, men bør komprimeres senere.
-- **Fonter:** CSS-en refererer til fontfamilier som aldri lastes (ingen @font-face eller Google Fonts). Nettleseren faller tilbake til systemfonter. Dette er beholdt likt.
+- **Fonter:** CSS-en refererer til fontfamilier som aldri lastes (ingen @font-face eller Google Fonts). Nettleseren faller tilbake til systemfonter. *Oppdatert 12.11.2026:* Montserrat (brødtekst) og Playfair Display (overskrifter) lastes nå selvhostet via `@fontsource` i `Layout.astro`, slik CSS-en er ment.
 - **CSS:** den originale kompilerte Tailwind-filen er gjenbrukt uendret, med originalt filnavn (`/assets/index-DBKj67Oc.css`).
 - **Tredjepartsskript:**
   - Lovable/gpt-engineer analytics og badge (lovable.dev): fjernet.
@@ -103,7 +103,7 @@
   - Skråstrek på slutten: `vercel.json` sender `/om-stefan/` videre til `/om-stefan` med 308.
   - SSL og DNS flyttes ved lansering. Vercel lager SSL-sertifikatet selv.
 - **Ikke endret, men verdt å vite:**
-  - Fontene lastes ikke.
+  - Fontene lastes ikke (rettet 12.11.2026, se Fonter over).
   - Fire bilder er Unsplash-stockbilder.
   - Vikingbad-bildet er på 4 MB.
   - Forsiden mangler H1.
