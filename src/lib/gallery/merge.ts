@@ -1,12 +1,12 @@
-// Merges the galleries synced from Dropbox with the gallery texts in src/content/galleries/*.json.
+// Merges the galleries synced from the Blob store (uploaded through /admin) with the gallery texts in src/content/galleries/*.json.
 //
 // Rules:
-// - No Dropbox data (sync not configured, e.g. local dev): the JSON galleries are used as they are.
+// - No synced data (sync not configured, e.g. local dev): the JSON galleries are used as they are.
 // - Every service in src/content/galleries/*.json (portretter, produktbilder, arkitektur) always
 //   exists and keeps its texts (intro, CTA, SEO, layout, display name). It takes its images (and
-//   cover.jpg, if any) from the Dropbox folder with the same slug or name ("01 Portretter").
+//   cover image, if any) from the category folder with the same slug or name ("01 Portretter").
 //   Without such a folder, or while that folder is empty, it keeps the images in its JSON file.
-// - A Dropbox folder without a JSON file becomes a new category with neutral default texts.
+// - A folder without a JSON file becomes a new category with neutral default texts.
 // - The services keep their JSON order (same as the home page). New categories come after them,
 //   in folder order ("04 Bryllup" before "05 Konfirmasjon").
 

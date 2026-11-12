@@ -37,7 +37,7 @@ npm test          # unit tests: form validation, payload, calendar, api/lead.ts 
 | `src/lib/forms/` | Form validation, payload and the **backend seam** |
 | `public/assets/index-DBKj67Oc.css` | The original compiled Tailwind CSS, under its original hashed name. It is unchanged, which is what keeps the look identical. Do not regenerate it. If you ever edit it, give it a new file name, because Vercel caches `/assets/*` as immutable for a year. |
 | `api/lead.ts` | Vercel serverless function `POST /api/lead`: server-side validation, a honeypot check and one email through Resend |
-| `api/dropbox-webhook.ts`, `scripts/sync-dropbox.ts`, `src/lib/dropbox/` | Gallery from Dropbox (see below) |
+| `src/pages/admin.astro`, `src/scripts/admin.ts`, `api/admin.ts`, `scripts/sync-gallery.ts`, `src/lib/gallery/` | Gallery upload page and build sync (see "Gallery and /admin") |
 | `vercel.json` | Vercel config: Astro preset, `dist/`, clean URLs, no trailing slash, `www` → apex |
 | `public/images/` | All images, stored locally. They were previously hosted on Supabase Storage, Unsplash and Google Storage. |
 
@@ -157,50 +157,43 @@ The Supabase admin (`/admin`) no longer controls the site. To change content:
 2. Put new images in `public/images/`.
 3. Commit and push. Vercel rebuilds and redeploys.
 
-Gallery images and categories come from Dropbox once it is configured (next section). The texts on the gallery pages still live in `src/content/galleries/*.json`.
+Gallery images and categories are managed at `/admin` (next section). The texts on the gallery pages still live in `src/content/galleries/*.json`.
 
-## Gallery from Dropbox
+## Gallery and /admin
 
-When the Dropbox env vars are set, the portfolio and the gallery pages are filled from a Dropbox folder. Nothing else on the site changes.
+Stefan uploads and removes gallery images himself at **https://stefanborup.com/admin** (password protected, not linked anywhere, `noindex`, not in the sitemap). The images are stored privately in a Vercel Blob store (`stefanborup-bilder`, region `arn1`), and the build turns them into the public WebP files.
 
-**Folder convention** (inside the Dropbox app folder, `Apps/<app name>/`):
+**On the admin page**
 
-| In Dropbox | On the site |
+- Each service (Portretter, Produktbilder, Arkitektur) has its own section. Drag images in, or press "Velg bilder".
+- The browser shrinks each image to at most 3200 px and re-encodes it as JPEG before uploading (fast, and EXIF/GPS is removed).
+- "Forside" makes an image the cover (hero) of that page. "Slett" removes it.
+- "Ny kategori" creates an extra category (for example Bryllup). It shows on the site once it has an image.
+- After each change the page calls the deploy hook. The site is updated about 2 minutes later.
+
+**In the Blob store** the layout is `galleri/<category folder>/<file>`, with the same rules as before:
+
+| In the store | On the site |
 |---|---|
-| `01 Portretter/`, `02 Produktbilder/`, `03 Arkitektur/` | One category per subfolder. The number is not shown. The slug comes from the name (`portretter`). |
-| Order | Services keep the home page order. New categories follow, by folder number, then alphabetically. |
-| A folder starting with `_` (e.g. `_Utkast/`) | Ignored |
-| `cover.jpg` or `forside.jpg` in a category | Hero image of the category page (not shown in the grid). Without it, the JSON cover or the first image is used. |
-| Image files (`jpg`, `jpeg`, `png`, `webp`, `tif`, `tiff`, `avif`) | Sorted by file name. The file name is the alt text (`01 Kari Nordmann.jpg` → "Kari Nordmann"); camera names like `IMG_1234` fall back to the category name. |
+| `galleri/01 Portretter/`, `galleri/Bryllup/` | One category per folder. A number prefix sets the order and is not shown. The slug comes from the name. |
+| `forside--<name>.jpg` (set by "Forside"), `cover.jpg` or `forside.jpg` | Hero image of the category page (not in the grid) |
+| Other images | Sorted by file name. The file name is the alt text; camera names like `IMG_1234` fall back to the category name. |
 
-**Services and categories.** The three services (`portretter`, `produktbilder`, `arkitektur` in `src/content/galleries/`) are the ones on the home page, in the "Tjenester" menu and as tabs on `/portefolje`. Each service takes its images from the Dropbox folder with the same name or slug (`01 Portretter` or `Portretter og Miljøbilder`), so `/portretter` and the "Portretter" tab on `/portefolje` both show that folder. A service always keeps its texts, SEO, layout and place in the order. Without a matching folder, or while it is empty, it keeps the images in its JSON file. A Dropbox folder that matches no service becomes a new category at `/galleri/<slug>` with neutral default texts, after the services, in the menu and on `/portefolje`.
+**Services and categories.** The three services in `src/content/galleries/` always exist and keep their texts, SEO, layout and order. Each takes its images from the folder with the same name or slug. Without such a folder, or while it is empty, it keeps the images in its JSON file. Any other folder becomes a new category at `/galleri/<slug>` with neutral default texts, after the services.
 
-**How it runs.**
+**How the build runs.**
 
-1. `npm run build` first runs `scripts/sync-dropbox.ts`. It lists the folder through the Dropbox API, downloads new images, and writes two WebP sizes (900 and 2560 px wide, EXIF and GPS stripped) to `public/images/dropbox/`, plus `src/generated/dropbox-galleries.json`. Both are gitignored.
-2. Images already published on the live site (its `/images/dropbox/manifest.json`) are copied from there instead of downloaded again, so only new or changed images are processed.
-3. Without the env vars the script does nothing and the JSON images are used (local dev, tests). With them, a Dropbox error fails the build, so the previous deployment stays live.
-4. Dropbox calls `api/dropbox-webhook.ts` when anything in the folder changes. The function checks the signature and triggers a Vercel deploy hook. New images are live about 1 to 2 minutes later.
+1. `npm run build` first runs `scripts/sync-gallery.ts`. It lists the Blob store and writes two WebP sizes (900 and 2560 px wide) to `public/images/galleri/`, plus `src/generated/galleries.json`. Both are gitignored.
+2. Images already on the live site (its `/images/galleri/manifest.json`) are copied from there, so only new or changed images are processed.
+3. Without `BLOB_READ_WRITE_TOKEN` the script does nothing and the JSON images are used (local dev, tests). With it, an error fails the build, so the previous deployment stays live.
+4. One-time import: while the marker `galleri/.importert-fra-dropbox` is missing and the `DROPBOX_*` env vars are set, the build copies the earlier Dropbox folder (`scripts/dropbox-import.ts`) into the store. After that, the `DROPBOX_*` env vars, the Dropbox app and `scripts/dropbox-import.ts` can be removed.
 
-**Env vars (Vercel, Production):**
+**Env vars (Vercel):**
 
 | Name | Value |
 |---|---|
-| `DROPBOX_APP_KEY` | App key of the Dropbox app |
-| `DROPBOX_APP_SECRET` | App secret (verifies webhook signatures) |
-| `DROPBOX_REFRESH_TOKEN` | From `npm run dropbox:auth -- <app key>` |
+| `ADMIN_PASSWORD` | Password for `/admin`. Changing it logs everyone out. |
+| `BLOB_READ_WRITE_TOKEN` | Added by Vercel when the Blob store is connected to the project |
 | `VERCEL_DEPLOY_HOOK_URL` | Deploy hook for `main` (Project → Settings → Git → Deploy Hooks) |
-| `DROPBOX_ROOT_PATH` | Optional: a subfolder inside the app folder, e.g. `/Nettside` |
-
-**Setup, once.**
-
-1. At https://www.dropbox.com/developers/apps, create an app: *Scoped access*, *App folder*. Under Permissions, tick `files.metadata.read` and `files.content.read` and submit.
-2. Run `npm run dropbox:auth -- <app key>`, open the link while logged in to the Dropbox account that holds the photos, approve, and paste the code back. This prints the refresh token.
-3. Create the deploy hook in Vercel and set the env vars above. Redeploy.
-4. In the Dropbox app settings, add the webhook URI `https://<production domain>/api/dropbox-webhook`.
-
-**Moving to another Dropbox account** (e.g. from Kay's to Stefan's): run step 2 with the new account, replace `DROPBOX_REFRESH_TOKEN`, and put the folders in the new account's `Apps/<app name>/`. No code changes.
-
-If you upload many photos at once, Dropbox may notify several times and Vercel may run a few builds in a row. That is harmless: images that are already live are copied, not processed again.
 
 The HubSpot embed on `/bestilling` (portal `143788873`, form `2fca001b-…`) is kept as it was and does not use `/api/lead`. The HubSpot form currently returns 404, both live and here, so it needs fixing or removing in HubSpot.

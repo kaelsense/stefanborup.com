@@ -14,8 +14,11 @@
       "permanent": true
     }
   ],
+  "headers": [
+    { "source": "/admin", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }, { "key": "Cache-Control", "value": "no-store" }] }
+  ],
   "functions": {
     "api/lead.ts": { "maxDuration": 10 },
-    "api/dropbox-webhook.ts": { "maxDuration": 10 }
+    "api/admin.ts": { "maxDuration": 30 }
   }
 }
