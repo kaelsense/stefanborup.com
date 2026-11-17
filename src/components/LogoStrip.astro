@@ -8,8 +8,11 @@ const loop = [...logos.map((l) => ({ ...l, dup: false })), ...logos.map((l) => (
 {logos.length > 0 && (
 <section class="py-8 bg-dark-deeper overflow-hidden" aria-label="Kunder">
   <div class="relative">
-    <!-- 25s per loop for 19 logos (stylesheet default 30s was set for 8 logos). -->
-    <div class="flex logo-scroll" style="animation-duration: 25s">
+    <!-- width: max-content makes translateX(-50%) equal one full set of logos, so the loop is seamless and
+         the speed depends on the logos, not the screen width. Without it the strip was only as wide as the
+         screen: it moved half a screen per loop (very slowly) and the later logos were never shown.
+         60s per loop is about 75 px/s on desktop and 55 px/s on mobile. -->
+    <div class="flex logo-scroll" style="width: max-content; animation-duration: 60s">
       {loop.map((l) => (
         <div class="flex-shrink-0 mx-8 md:mx-12 flex items-center justify-center h-12" aria-hidden={l.dup ? 'true' : 'false'}>
           <img src={l.image.src} alt={l.dup ? '' : l.image.alt || l.name} loading="lazy" class={IMG} />
