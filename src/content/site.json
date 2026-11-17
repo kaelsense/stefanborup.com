@@ -62,15 +62,6 @@
     "logos": [
       {
         "key": "l0",
-        "name": "Luxconsult",
-        "image": {
-          "alt": "Luxconsult",
-          "src": "/images/published/seed/logos/luxconsult.png",
-          "thumb": "/images/published/seed/logos/luxconsult.png"
-        }
-      },
-      {
-        "key": "l1",
         "name": "Timeme",
         "image": {
           "alt": "Timeme",
@@ -79,16 +70,43 @@
         }
       },
       {
-        "key": "l2",
-        "name": "Hurdalsjøen",
+        "key": "l1",
+        "name": "Digitelle",
         "image": {
-          "alt": "Hurdalsjøen",
-          "src": "/images/published/seed/logos/hurdalsjoen.png",
-          "thumb": "/images/published/seed/logos/hurdalsjoen.png"
+          "alt": "Digitelle",
+          "src": "/images/published/seed/logos/digitelle.png",
+          "thumb": "/images/published/seed/logos/digitelle.png"
+        }
+      },
+      {
+        "key": "l2",
+        "name": "Thygesen AS",
+        "image": {
+          "alt": "Thygesen AS",
+          "src": "/images/published/seed/logos/thygesen.png",
+          "thumb": "/images/published/seed/logos/thygesen.png"
         }
       },
       {
         "key": "l3",
+        "name": "Lius Kunnskaps- og gründerhus",
+        "image": {
+          "alt": "Lius Kunnskaps- og gründerhus",
+          "src": "/images/published/seed/logos/lius.png",
+          "thumb": "/images/published/seed/logos/lius.png"
+        }
+      },
+      {
+        "key": "l4",
+        "name": "Advokatfirmaet Økland",
+        "image": {
+          "alt": "Advokatfirmaet Økland",
+          "src": "/images/published/seed/logos/okland.png",
+          "thumb": "/images/published/seed/logos/okland.png"
+        }
+      },
+      {
+        "key": "l5",
         "name": "Garcon",
         "image": {
           "alt": "Garcon",
@@ -97,16 +115,52 @@
         }
       },
       {
-        "key": "l4",
-        "name": "Elevate Productions",
+        "key": "l6",
+        "name": "Hurdalsjøen",
         "image": {
-          "alt": "Elevate Productions",
-          "src": "/images/published/seed/logos/elevate.png",
-          "thumb": "/images/published/seed/logos/elevate.png"
+          "alt": "Hurdalsjøen",
+          "src": "/images/published/seed/logos/hurdalsjoen.png",
+          "thumb": "/images/published/seed/logos/hurdalsjoen.png"
         }
       },
       {
-        "key": "l5",
+        "key": "l7",
+        "name": "NHO Reiseliv",
+        "image": {
+          "alt": "NHO Reiseliv",
+          "src": "/images/published/seed/logos/nhoreiseliv.png",
+          "thumb": "/images/published/seed/logos/nhoreiseliv.png"
+        }
+      },
+      {
+        "key": "l8",
+        "name": "AJ Produkter",
+        "image": {
+          "alt": "AJ Produkter",
+          "src": "/images/published/seed/logos/ajprodukter.png",
+          "thumb": "/images/published/seed/logos/ajprodukter.png"
+        }
+      },
+      {
+        "key": "l9",
+        "name": "Soria Moria Hotell",
+        "image": {
+          "alt": "Soria Moria Hotell",
+          "src": "/images/published/seed/logos/soriamoria.png",
+          "thumb": "/images/published/seed/logos/soriamoria.png"
+        }
+      },
+      {
+        "key": "l10",
+        "name": "Kunnskapsbyen Lillestrøm",
+        "image": {
+          "alt": "Kunnskapsbyen Lillestrøm",
+          "src": "/images/published/seed/logos/kunnskapsbyen.png",
+          "thumb": "/images/published/seed/logos/kunnskapsbyen.png"
+        }
+      },
+      {
+        "key": "l11",
         "name": "Netflix",
         "image": {
           "alt": "Netflix",
@@ -115,7 +169,52 @@
         }
       },
       {
-        "key": "l6",
+        "key": "l12",
+        "name": "Elevate Productions",
+        "image": {
+          "alt": "Elevate Productions",
+          "src": "/images/published/seed/logos/elevate.png",
+          "thumb": "/images/published/seed/logos/elevate.png"
+        }
+      },
+      {
+        "key": "l13",
+        "name": "Quality Hotel Olavsgaard",
+        "image": {
+          "alt": "Quality Hotel Olavsgaard",
+          "src": "/images/published/seed/logos/olavsgaard.png",
+          "thumb": "/images/published/seed/logos/olavsgaard.png"
+        }
+      },
+      {
+        "key": "l14",
+        "name": "X Meeting Point",
+        "image": {
+          "alt": "X Meeting Point",
+          "src": "/images/published/seed/logos/xmeetingpoint.png",
+          "thumb": "/images/published/seed/logos/xmeetingpoint.png"
+        }
+      },
+      {
+        "key": "l15",
+        "name": "Nittedal kommune",
+        "image": {
+          "alt": "Nittedal kommune",
+          "src": "/images/published/seed/logos/nittedal.png",
+          "thumb": "/images/published/seed/logos/nittedal.png"
+        }
+      },
+      {
+        "key": "l16",
+        "name": "Luxconsult",
+        "image": {
+          "alt": "Luxconsult",
+          "src": "/images/published/seed/logos/luxconsult.png",
+          "thumb": "/images/published/seed/logos/luxconsult.png"
+        }
+      },
+      {
+        "key": "l17",
         "name": "K2 Elektro",
         "image": {
           "alt": "K2 Elektro",
@@ -124,7 +223,7 @@
         }
       },
       {
-        "key": "l7",
+        "key": "l18",
         "name": "Strongpoint",
         "image": {
           "alt": "Strongpoint",
