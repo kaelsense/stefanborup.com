@@ -8,8 +8,8 @@ const loop = [...logos.map((l) => ({ ...l, dup: false })), ...logos.map((l) => (
 {logos.length > 0 && (
 <section class="py-8 bg-dark-deeper overflow-hidden" aria-label="Kunder">
   <div class="relative">
-    <!-- 58s (stylesheet default 30s): the strip grew from 8 to 19 logos; 70s kept the old speed, 58s is ~20 % faster. -->
-    <div class="flex logo-scroll" style="animation-duration: 58s">
+    <!-- 45s (stylesheet default 30s): the strip has 19 logos; 70s kept the original speed, 45s is what Kay chose. -->
+    <div class="flex logo-scroll" style="animation-duration: 45s">
       {loop.map((l) => (
         <div class="flex-shrink-0 mx-8 md:mx-12 flex items-center justify-center h-12" aria-hidden={l.dup ? 'true' : 'false'}>
           <img src={l.image.src} alt={l.dup ? '' : l.image.alt || l.name} loading="lazy" class={IMG} />
