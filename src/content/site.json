@@ -230,6 +230,15 @@
           "src": "/images/published/seed/logos/strongpoint.png",
           "thumb": "/images/published/seed/logos/strongpoint.png"
         }
+      },
+      {
+        "key": "l19",
+        "name": "Mantena",
+        "image": {
+          "alt": "Mantena",
+          "src": "/images/published/seed/logos/mantena.png",
+          "thumb": "/images/published/seed/logos/mantena.png"
+        }
       }
     ],
     "footer": {
